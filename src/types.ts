@@ -1,5 +1,13 @@
 import { Node } from "acorn";
 
+export type DeclarationKind = 'const' | 'let' | 'var'
+
+export type Env = {
+	[key: string]: {
+		value: any;
+		kind: DeclarationKind;
+	};
+};
 export interface BlockNode extends Node {
 	body: Node[];
 }
@@ -32,14 +40,20 @@ export interface LiteralExpressionNode extends Node {
 
 export interface VariableDeclarationNode extends Node {
 	declarations: VariableDeclaratorNode[];
-	kind: "let" | "const";
+	kind: DeclarationKind;
 }
-	
+
 export interface VariableDeclaratorNode extends Node {
 	id: IdentifierNode;
-	init: Node
+	init: Node;
 }
 
 export interface IdentifierNode extends Node {
 	name: string;
+}
+
+export interface AssignmentExpressionNode extends Node {
+	operator: string;
+	left: IdentifierNode;
+	right: Node;
 }
