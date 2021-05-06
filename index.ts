@@ -1,12 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Node, Options, parse } from 'acorn';
+import { Node, Options, parse } from "acorn";
 
-import { isReturnValue } from '@src/getters';
-import { getPrimitiveFunction } from '@src/primitives';
-import { BinaryExpressionNode, BlockNode, ExpressionNode, LiteralExpressionNode, LogicalExpressionNode } from '@src/types';
+import { isReturnValue } from "@src/getters";
+import { getPrimitiveBinaryFunction, getPrimitiveUnaryFunction } from "@src/primitives";
+import {
+	BinaryExpressionNode,
+	BlockNode,
+	ExpressionNode,
+	LiteralExpressionNode,
+	LogicalExpressionNode,
+	UnaryExpressionNode,
+} from "@src/types";
 
 const SOURCE_CODE = `
-1+1
+typeof 1
 `;
 
 const acornOptions: Options = {
@@ -23,7 +30,7 @@ console.log(evaluate(ast));
 function evaluate(node: Node): any {
 	const { type } = node;
 	// console.log(node)
-	
+
 	// Handling clearly labelled nodes
 	switch (type) {
 		case "Program":
@@ -36,6 +43,9 @@ function evaluate(node: Node): any {
 		case "ExpressionStatement":
 			return evaluate((node as ExpressionNode).expression);
 
+		case "UnaryExpression":
+			return evalUnaryExpression(node as UnaryExpressionNode);
+
 		case "BinaryExpression":
 			return evalBinaryExpression(node as BinaryExpressionNode);
 
@@ -45,6 +55,10 @@ function evaluate(node: Node): any {
 		case "Literal":
 			return evalLiteral(node as LiteralExpressionNode);
 
+		case "VariableDeclaration":
+			console.log("here");
+			break;
+
 		default:
 			break;
 	}
@@ -53,7 +67,6 @@ function evaluate(node: Node): any {
 function apply(fn: (...args: any[]) => any, args: any[]) {
 	return fn(...args);
 }
-
 
 // Eval Handlers
 function evalBlock(node: BlockNode) {
@@ -79,9 +92,18 @@ function evalSequence(nodes: Array<Node>): any | void {
 	}
 }
 
+function evalUnaryExpression(node: UnaryExpressionNode) {
+	const { operator, argument } = node;
+	const operatorFunction = getPrimitiveUnaryFunction(operator);
+	const argValue = evaluate(argument);
+	if (operatorFunction) {
+		return apply(operatorFunction, [argValue]);
+	}
+}
+
 function evalBinaryExpression(node: BinaryExpressionNode) {
 	const { left, right, operator } = node;
-	const primitiveFunction = getPrimitiveFunction(operator);
+	const primitiveFunction = getPrimitiveBinaryFunction(operator);
 	const leftValue = evaluate(left);
 	const rightValue = evaluate(right);
 	if (primitiveFunction) {
@@ -91,7 +113,7 @@ function evalBinaryExpression(node: BinaryExpressionNode) {
 
 function evalLogicalExpression(node: LogicalExpressionNode) {
 	const { left, right, operator } = node;
-	const primitiveFunction = getPrimitiveFunction(operator);
+	const primitiveFunction = getPrimitiveBinaryFunction(operator);
 	const leftValue = evaluate(left);
 	const rightValue = evaluate(right);
 	if (primitiveFunction) {
@@ -103,4 +125,3 @@ function evalLiteral(node: LiteralExpressionNode) {
 	const { value } = node;
 	return value;
 }
-
