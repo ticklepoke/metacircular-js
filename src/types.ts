@@ -14,6 +14,13 @@ export interface BinaryExpressionNode extends Node {
 	operator: string;
 }
 
+export interface LogicalExpressionNode extends Node {
+	left: Node;
+	right: Node;
+	operator: string;
+}
+
 export interface LiteralExpressionNode extends Node {
 	raw: string;
+	value: number | string | boolean | undefined | null;
 }

@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Node, Options, parse } from 'acorn';
 
-import { isNumeric, isReturnValue } from '@src/getters';
+import { isReturnValue } from '@src/getters';
 import { getPrimitiveFunction } from '@src/primitives';
-import { BinaryExpressionNode, BlockNode, ExpressionNode, LiteralExpressionNode } from '@src/types';
+import { BinaryExpressionNode, BlockNode, ExpressionNode, LiteralExpressionNode, LogicalExpressionNode } from '@src/types';
 
 const SOURCE_CODE = `
-1 + 1 - 1 + 1;
+1+1
 `;
 
 const acornOptions: Options = {
@@ -22,7 +22,7 @@ console.log(evaluate(ast));
 
 function evaluate(node: Node): any {
 	const { type } = node;
-	// console.log(node);
+	// console.log(node)
 	
 	// Handling clearly labelled nodes
 	switch (type) {
@@ -38,6 +38,9 @@ function evaluate(node: Node): any {
 
 		case "BinaryExpression":
 			return evalBinaryExpression(node as BinaryExpressionNode);
+
+		case "LogicalExpression":
+			return evalLogicalExpression(node as LogicalExpressionNode);
 
 		case "Literal":
 			return evalLiteral(node as LiteralExpressionNode);
@@ -86,11 +89,18 @@ function evalBinaryExpression(node: BinaryExpressionNode) {
 	}
 }
 
-function evalLiteral(node: LiteralExpressionNode) {
-	const { raw } = node;
-	if (isNumeric(raw)) {
-		return Number(raw);
+function evalLogicalExpression(node: LogicalExpressionNode) {
+	const { left, right, operator } = node;
+	const primitiveFunction = getPrimitiveFunction(operator);
+	const leftValue = evaluate(left);
+	const rightValue = evaluate(right);
+	if (primitiveFunction) {
+		return apply(primitiveFunction, [leftValue, rightValue]);
 	}
-	return raw;
+}
+
+function evalLiteral(node: LiteralExpressionNode) {
+	const { value } = node;
+	return value;
 }
 
