@@ -1,13 +1,17 @@
 import { Node } from "acorn";
 
-export type DeclarationKind = 'const' | 'let' | 'var'
+export type DeclarationKind = "const" | "let" | "var";
+
+export type EnvironmentVariable = {
+	value: any;
+	kind: DeclarationKind;
+};
 
 export type Env = {
-	[key: string]: {
-		value: any;
-		kind: DeclarationKind;
-	};
+	[key: string]: EnvironmentVariable | Env | undefined;
+	parent?: Env; // TODO: this implementation means that we cant use "parent" as a variable name
 };
+
 export interface BlockNode extends Node {
 	body: Node[];
 }

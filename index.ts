@@ -9,6 +9,7 @@ import {
 	BlockNode,
 	DeclarationKind,
 	Env,
+	EnvironmentVariable,
 	ExpressionNode,
 	IdentifierNode,
 	LiteralExpressionNode,
@@ -19,9 +20,11 @@ import {
 } from "@src/types";
 
 const SOURCE_CODE = `
-let b = true;
-b = 1;
+let b = 1
+{
+b = 2;
 b;
+}
 `;
 
 const acornOptions: Options = {
@@ -43,7 +46,6 @@ try {
 }
 
 function evaluate(node: Node, env: Env): any {
-	// console.log(node)
 	const { type } = node;
 
 	// Handling clearly labelled nodes
@@ -89,10 +91,12 @@ function apply(fn: (...args: any[]) => any, args: any[]) {
 }
 
 // Eval Handlers
-// TODO: evalBlock should be responsible for extending the env
 function evalBlock(node: BlockNode, env: Env) {
 	const body = node.body;
-	return evalSequence(body, env);
+	const innerScope: Env = {
+		parent: env,
+	};
+	return evalSequence(body, innerScope);
 }
 
 function evalSequence(nodes: Array<Node>, env: Env): any | void {
@@ -168,12 +172,27 @@ function evalVariableDeclarator(node: VariableDeclaratorNode, kind: DeclarationK
 
 function evalIdentifier(node: IdentifierNode, env: Env) {
 	const { name } = node;
-	if (!env[name]) {
-		throw new Error("Reference to undeclared variable");
+
+	function lookupParentScope(target: string, env?: Env): any {
+		if (!env) {
+			throw new Error("Reference to undeclared variable");
+		} else if (env[target]) {
+			return env[target];
+		} else {
+			return lookupParentScope(target, env.parent);
+		}
 	}
-	return env[name].value;
+
+	if (env[name]) {
+		return env[name]?.value;
+	}
+	const lookupValue = lookupParentScope(name, env);
+	if (lookupValue) {
+		return lookupValue.value;
+	}
 }
 
+// TODO: shadowed vars should updated and remain in the outer scope
 function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
 	const {
 		left: { name },
@@ -181,17 +200,32 @@ function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
 		operator,
 	} = node;
 
+	function lookupParentScope(lookupTarget: string, env?: Env): any {
+		if (!env) {
+			throw new Error("Assignment to undeclared variable");
+		} else if (env[lookupTarget]) {
+			if ((env[lookupTarget] as EnvironmentVariable).kind === "const") {
+				throw new Error("Assignment to const variable");
+			}
+			env[lookupTarget] = { value: rightValue, kind: (env[lookupTarget] as EnvironmentVariable).kind };
+		} else {
+			return lookupParentScope(lookupTarget, env.parent);
+		}
+	}
+
 	if (operator !== "=") {
 		throw new Error("Unsupported assignment operator");
 	}
+
 	if (!env[name]) {
-		throw new Error("Assignment to undeclared variable");
+		return lookupParentScope(name, env);
 	}
-	if (env[name].kind === "const") {
+
+	if ((env[name] as EnvironmentVariable).kind === "const") {
 		throw new Error("Assignment to const variable");
 	}
 
 	const rightValue = evaluate(right, env);
 
-	env[name] = { value: rightValue, kind: env[name].kind };
+	env[name] = { value: rightValue, kind: (env[name] as EnvironmentVariable).kind };
 }
