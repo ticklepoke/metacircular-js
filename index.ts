@@ -23,8 +23,8 @@ const SOURCE_CODE = `
 let b = 1
 {
 b = 2;
-b;
 }
+b;
 `;
 
 const acornOptions: Options = {
@@ -188,11 +188,11 @@ function evalIdentifier(node: IdentifierNode, env: Env) {
 	}
 	const lookupValue = lookupParentScope(name, env);
 	if (lookupValue) {
+		env[name] = {value: lookupValue.value, kind: lookupValue.kind}
 		return lookupValue.value;
 	}
 }
 
-// TODO: shadowed vars should updated and remain in the outer scope
 function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
 	const {
 		left: { name },
@@ -217,6 +217,8 @@ function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
 		throw new Error("Unsupported assignment operator");
 	}
 
+	const rightValue = evaluate(right, env);
+
 	if (!env[name]) {
 		return lookupParentScope(name, env);
 	}
@@ -224,8 +226,6 @@ function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
 	if ((env[name] as EnvironmentVariable).kind === "const") {
 		throw new Error("Assignment to const variable");
 	}
-
-	const rightValue = evaluate(right, env);
 
 	env[name] = { value: rightValue, kind: (env[name] as EnvironmentVariable).kind };
 }
