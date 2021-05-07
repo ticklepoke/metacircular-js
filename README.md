@@ -22,3 +22,31 @@ yarn install
 ```sh
 yarn dev
 ```
+
+## Semantics
+
+The following langauge rules are currently supported.
+
+```
+Program     ::=     Block                                   program
+
+Block       ::=     { Statement ... }                       block statement
+
+Statement   ::=     const name = Expression;                constant declaration
+            |       let name = Expression;                  variable declaration
+            |       Block                                   block statement
+            |       Expression;                             expression statement
+
+Assignment  ::=     name = Expression                       variable assignment
+
+Expression  ::=     number                                  number literal
+            |       true | false                            boolean literal
+            |       string                                  string literal
+            |       Expression BinaryOperator Expression    binary operator combination
+            |       UnaryOperator Expression                unary operator combination
+
+UnaryOperator ::= ! | - | + | ~ | typeof 
+
+BinaryOperator ::= + | - | * | / | % | << | >> | >>> | < | > | <= | >= 
+                | instanceof | in | == | === | != | !== | & | ^ | | | && | || |
+```
