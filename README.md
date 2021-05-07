@@ -1,6 +1,8 @@
 # Metacircular-JS
 
-![You complete me]('/assets/batman-joker.jpg')
+<p align="center">
+  <img width="400" height="569" src="/assets/batman-joker.jpg" alt="you complete me">
+</p>
 
 A metacircular evaluator for Javascript, based on the SICP textbook. 
 
