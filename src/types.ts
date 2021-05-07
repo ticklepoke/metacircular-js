@@ -9,8 +9,8 @@ export type EnvironmentVariable = {
 
 export type Env = {
 	[key: string]: EnvironmentVariable | Env | undefined;
-	"^parent"?: Env; 	// This notation is a valid object key, and allows us to safely point to a parent object
-						// and allows us to use a "parent" variable name in the environment 
+	"^parent"?: Env; // This notation is a valid object key, and allows us to safely point to a parent object
+	// and allows us to use a "parent" variable name in the environment
 };
 
 export interface BlockNode extends Node {
@@ -61,4 +61,17 @@ export interface AssignmentExpressionNode extends Node {
 	operator: string;
 	left: IdentifierNode;
 	right: Node;
+}
+
+export interface CallExpressionNode extends Node {
+	callee: IdentifierNode | MemberExpressionNode; // Identifier or Member Expression
+	arguments: Node[];
+	optional: boolean;
+}
+
+export interface MemberExpressionNode extends Node {
+	object: IdentifierNode;
+	property: Node;
+	computed: boolean;
+	optional: boolean;
 }

@@ -7,6 +7,7 @@ import {
 	AssignmentExpressionNode,
 	BinaryExpressionNode,
 	BlockNode,
+	CallExpressionNode,
 	DeclarationKind,
 	Env,
 	EnvironmentVariable,
@@ -14,14 +15,14 @@ import {
 	IdentifierNode,
 	LiteralExpressionNode,
 	LogicalExpressionNode,
+	MemberExpressionNode,
 	UnaryExpressionNode,
 	VariableDeclarationNode,
 	VariableDeclaratorNode,
 } from "@src/types";
 
 const SOURCE_CODE = `
-let parent = 1
-parent;
+console.log("blah")
 `;
 
 const acornOptions: Options = {
@@ -78,6 +79,8 @@ function evaluate(node: Node, env: Env): any {
 		case "AssignmentExpression":
 			return evalAssignmentExpression(node as AssignmentExpressionNode, env);
 
+		case "CallExpression":
+			return evalCallExpression(node as CallExpressionNode, env);
 		default:
 			break;
 	}
@@ -91,7 +94,7 @@ function apply(fn: (...args: any[]) => any, args: any[]) {
 function evalBlock(node: BlockNode, env: Env) {
 	const body = node.body;
 	const innerScope: Env = {};
-	innerScope['^parent'] = env;
+	innerScope["^parent"] = env;
 	return evalSequence(body, innerScope);
 }
 
@@ -175,7 +178,7 @@ function evalIdentifier(node: IdentifierNode, env: Env) {
 		} else if (env[target]) {
 			return env[target];
 		} else {
-			return lookupParentScope(target, env['^parent']);
+			return lookupParentScope(target, env["^parent"]);
 		}
 	}
 
@@ -184,7 +187,7 @@ function evalIdentifier(node: IdentifierNode, env: Env) {
 	}
 	const lookupValue = lookupParentScope(name, env);
 	if (lookupValue) {
-		env[name] = {value: lookupValue.value, kind: lookupValue.kind}
+		env[name] = { value: lookupValue.value, kind: lookupValue.kind };
 		return lookupValue.value;
 	}
 }
@@ -205,7 +208,7 @@ function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
 			}
 			env[lookupTarget] = { value: rightValue, kind: (env[lookupTarget] as EnvironmentVariable).kind };
 		} else {
-			return lookupParentScope(lookupTarget, env['^parent']);
+			return lookupParentScope(lookupTarget, env["^parent"]);
 		}
 	}
 
@@ -224,4 +227,32 @@ function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
 	}
 
 	env[name] = { value: rightValue, kind: (env[name] as EnvironmentVariable).kind };
+}
+
+function evalCallExpression(node: CallExpressionNode, env: Env) {
+	const {
+		callee: { type },
+		callee,
+		arguments: nodeArguments,
+	} = node;
+	let callFn: any;
+	if (type === "Identifier") {
+		const { name } = callee as IdentifierNode;
+		if ((global as any)[name]) {
+			callFn = (global as any)[name];
+			const argumentValues = nodeArguments.map(nodeArg => evaluate(nodeArg, env));
+			return apply(callFn, argumentValues);
+		}
+	} else if (type === "MemberExpression") {
+		const { object, property, computed } = callee as MemberExpressionNode;
+		if (!computed) {
+			const { name: objectName } = object as IdentifierNode;
+			const { name: propertyName } = property as IdentifierNode;
+			if ((global as any)[objectName][propertyName]) {
+				callFn = (global as any)[objectName][propertyName];
+				const argumentValues = nodeArguments.map(nodeArg => evaluate(nodeArg, env));
+				return apply(callFn, argumentValues);
+			}
+		}
+	}
 }
