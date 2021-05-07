@@ -1,6 +1,6 @@
 # Metacircular-JS
 
-![You complete me]('/assets/batman-joker.jpg)
+![You complete me]('/assets/batman-joker.jpg')
 
 A metacircular evaluator for Javascript, based on the SICP textbook. 
 
