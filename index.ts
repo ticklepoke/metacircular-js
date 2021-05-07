@@ -20,11 +20,8 @@ import {
 } from "@src/types";
 
 const SOURCE_CODE = `
-let b = 1
-{
-b = 2;
-}
-b;
+let parent = 1
+parent;
 `;
 
 const acornOptions: Options = {
@@ -93,9 +90,8 @@ function apply(fn: (...args: any[]) => any, args: any[]) {
 // Eval Handlers
 function evalBlock(node: BlockNode, env: Env) {
 	const body = node.body;
-	const innerScope: Env = {
-		parent: env,
-	};
+	const innerScope: Env = {};
+	innerScope['^parent'] = env;
 	return evalSequence(body, innerScope);
 }
 
@@ -179,7 +175,7 @@ function evalIdentifier(node: IdentifierNode, env: Env) {
 		} else if (env[target]) {
 			return env[target];
 		} else {
-			return lookupParentScope(target, env.parent);
+			return lookupParentScope(target, env['^parent']);
 		}
 	}
 
@@ -209,7 +205,7 @@ function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
 			}
 			env[lookupTarget] = { value: rightValue, kind: (env[lookupTarget] as EnvironmentVariable).kind };
 		} else {
-			return lookupParentScope(lookupTarget, env.parent);
+			return lookupParentScope(lookupTarget, env['^parent']);
 		}
 	}
 
