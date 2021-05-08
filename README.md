@@ -50,3 +50,30 @@ UnaryOperator ::= ! | - | + | ~ | typeof
 BinaryOperator ::= + | - | * | / | % | << | >> | >>> | < | > | <= | >= 
                 | instanceof | in | == | === | != | !== | & | ^ | | | && | || |
 ```
+
+
+There are plans for the following rules to be supported.
+```
+Statement   ::=     function name (parameters) Block        function declaration
+            |       return Expression                       return expression
+            |       IfStatement                             conditional statement
+            |       IfElseStatement                         conditional alternative statement
+
+IfStatement ::=     if (Expression) Block                   
+
+IfElseStatement ::= IfStatement else 
+                    (Block | IfStatement | IfElseStatement) 
+
+Expression  ::=     (parameters) => Expression | Block      arrow function
+            |       Expression ? Expression : Expression    ternary conditional
+            |       [ Expressions ]                         array literal
+            |       Expression [ Expression ]               array access / object access
+            |       Expression [ Expression ] = Expression  array assignment
+            |       { ObjectKey: Expression }               object literal
+            |       name.name                               object access
+            |       name.name = Expression                  object property assignment
+
+ObjectKey   ::=     string | [ Expression ]                 
+
+Expressions ::=     Expression (, Expression) ...           multiple expressions
+```
