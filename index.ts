@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Node, Options, parse } from "acorn";
 
-import { isReturnValue } from "@src/getters";
+import { isIdentifier, isMemberExpression, isReturnValue } from "@src/getters";
 import { getPrimitiveBinaryFunction, getPrimitiveUnaryFunction } from "@src/primitives";
 import {
 	AssignmentExpressionNode,
@@ -46,7 +46,6 @@ try {
 function evaluate(node: Node, env: Env): any {
 	const { type } = node;
 
-	// Handling clearly labelled nodes
 	switch (type) {
 		case "Program":
 			// noop
@@ -231,19 +230,18 @@ function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
 
 function evalCallExpression(node: CallExpressionNode, env: Env) {
 	const {
-		callee: { type },
 		callee,
 		arguments: nodeArguments,
 	} = node;
 	let callFn: any;
-	if (type === "Identifier") {
+	if (isIdentifier(callee)) {
 		const { name } = callee as IdentifierNode;
 		if ((global as any)[name]) {
 			callFn = (global as any)[name];
 			const argumentValues = nodeArguments.map(nodeArg => evaluate(nodeArg, env));
 			return apply(callFn, argumentValues);
 		}
-	} else if (type === "MemberExpression") {
+	} else if (isMemberExpression(callee)) {
 		const { object, property, computed } = callee as MemberExpressionNode;
 		if (!computed) {
 			const { name: objectName } = object as IdentifierNode;
