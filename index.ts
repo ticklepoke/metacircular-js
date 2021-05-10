@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Node, Options, parse } from "acorn";
+import * as fs from "fs";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { isIdentifier, isMemberExpression, isReturnValue } from "@src/getters";
 import { getPrimitiveBinaryFunction, getPrimitiveUnaryFunction } from "@src/primitives";
 import {
@@ -21,9 +22,26 @@ import {
 	VariableDeclaratorNode,
 } from "@src/types";
 
-const SOURCE_CODE = `
-console.log("blah")
-`;
+const args = process.argv;
+
+if (args.length !== 3 || !args[2].includes(".js")) {
+	console.error("Usage: yarn [start|dev] <filename.js>");
+	process.exit(1);
+}
+
+const filename = args[2];
+
+let SOURCE_CODE;
+try {
+	SOURCE_CODE = fs.readFileSync(filename, { encoding: "utf-8" });
+} catch (e) {
+	console.error("Unable to read file");
+}
+
+if (!SOURCE_CODE) {
+	console.error("NO SOURCE CODE");
+	process.exit(1);
+}
 
 const acornOptions: Options = {
 	ecmaVersion: "latest",
@@ -229,10 +247,7 @@ function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
 }
 
 function evalCallExpression(node: CallExpressionNode, env: Env) {
-	const {
-		callee,
-		arguments: nodeArguments,
-	} = node;
+	const { callee, arguments: nodeArguments } = node;
 	let callFn: any;
 	if (isIdentifier(callee)) {
 		const { name } = callee as IdentifierNode;
