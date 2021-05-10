@@ -84,7 +84,7 @@ This approach of "capturing" variables allows closures to be supported, if a fun
 
 ## Running
 
-The project can be run by editing the `SOURCE_CODE` variable in `/index.ts`. Valid Javascript is supported according to the semantics below. There are future plans to support reading file inputs or a repl style input.
+The project can be run by specifying an input Javascript file to be evaluated. Valid Javascript is supported according to the semantics below. 
 
 ### Install dependencies
 
@@ -94,7 +94,11 @@ yarn install
 
 ### Run the evaluator
 ```sh
-yarn dev
+// Run with nodemon
+yarn dev <filename.js>
+
+// Single execution
+yarn start <filename.js>
 ```
 
 ## Semantics
@@ -118,6 +122,9 @@ Expression  ::=     number                                  number literal
             |       string                                  string literal
             |       Expression BinaryOperator Expression    binary operator combination
             |       UnaryOperator Expression                unary operator combination
+
+
+Expressions ::=     Expression (, Expression) ...           multiple expressions
 
 UnaryOperator ::= ! | - | + | ~ | typeof 
 
@@ -148,6 +155,4 @@ Expression  ::=     (parameters) => Expression | Block      arrow function
             |       name.name = Expression                  object property assignment
 
 ObjectKey   ::=     string | [ Expression ]                 
-
-Expressions ::=     Expression (, Expression) ...           multiple expressions
 ```
