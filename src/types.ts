@@ -75,3 +75,16 @@ export interface MemberExpressionNode extends Node {
 	computed: boolean;
 	optional: boolean;
 }
+
+export interface ObjectExpressionNode extends Node {
+	properties: PropertyNode[];
+}
+
+export interface PropertyNode extends Node {
+	method: boolean;
+	shorthand: false; // refers to shorthands like { something }
+	computed: false; // if the key is a variable { [b] : ... }
+	key: IdentifierNode | LiteralExpressionNode;
+	value: Node;
+	kind: "init";
+}

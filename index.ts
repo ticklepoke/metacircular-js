@@ -17,6 +17,7 @@ import {
 	LiteralExpressionNode,
 	LogicalExpressionNode,
 	MemberExpressionNode,
+	ObjectExpressionNode,
 	UnaryExpressionNode,
 	VariableDeclarationNode,
 	VariableDeclaratorNode,
@@ -98,6 +99,10 @@ function evaluate(node: Node, env: Env): any {
 
 		case "CallExpression":
 			return evalCallExpression(node as CallExpressionNode, env);
+
+		case "ObjectExpression":
+			return evalObjectExpression(node as ObjectExpressionNode, env);
+
 		default:
 			break;
 	}
@@ -177,6 +182,7 @@ function evalVariableDeclarator(node: VariableDeclaratorNode, kind: DeclarationK
 		id: { name },
 		init,
 	} = node;
+
 	const initValue = evaluate(init, env);
 
 	if (env[name]) {
@@ -268,4 +274,24 @@ function evalCallExpression(node: CallExpressionNode, env: Env) {
 			}
 		}
 	}
+}
+
+function evalObjectExpression(node: ObjectExpressionNode, env: Env) {
+	const { properties } = node;
+	const heapFrame: { [key: string]: any } = {};
+
+	properties.forEach(({ key, value }) => {
+		const evaluatedValue = evaluate(value, env);
+		if (key.type === "Identifier") {
+			const { name } = key as IdentifierNode;
+			heapFrame[name] = evaluatedValue;
+		} else if (key.type === "Literal") {
+			const { value } = key as LiteralExpressionNode;
+			if (typeof value === "string") {
+				heapFrame[value] = evaluatedValue;
+			}
+		}
+	});
+
+	return heapFrame;
 }
