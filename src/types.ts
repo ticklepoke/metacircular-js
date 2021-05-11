@@ -59,7 +59,7 @@ export interface IdentifierNode extends Node {
 
 export interface AssignmentExpressionNode extends Node {
 	operator: string;
-	left: IdentifierNode;
+	left: IdentifierNode | MemberExpressionNode;
 	right: Node;
 }
 

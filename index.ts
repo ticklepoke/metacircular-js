@@ -216,11 +216,7 @@ function evalIdentifier(node: IdentifierNode, env: Env) {
 }
 
 function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
-	const {
-		left: { name },
-		right,
-		operator,
-	} = node;
+	const { left, right, operator } = node;
 
 	function lookupParentScope(lookupTarget: string, env?: Env): any {
 		if (!env) {
@@ -241,15 +237,35 @@ function evalAssignmentExpression(node: AssignmentExpressionNode, env: Env) {
 
 	const rightValue = evaluate(right, env);
 
-	if (!env[name]) {
-		return lookupParentScope(name, env);
-	}
+	if (left.type === "MemberExpression") {
+		// lookup store, assign property
+		const {
+			object: { name },
+			property,
+		} = left as MemberExpressionNode;
 
-	if ((env[name] as EnvironmentVariable).kind === "const") {
-		throw new Error("Assignment to const variable");
-	}
+		if (property.type !== "Identifier") {
+			throw new Error("Only identifiers supported for object indexing");
+		}
 
-	env[name] = { value: rightValue, kind: (env[name] as EnvironmentVariable).kind };
+		env[name] = {
+			value: {
+				...env[name]?.value,
+				[(property as IdentifierNode).name]: rightValue,
+			},
+		};
+	} else {
+		const { name } = left as IdentifierNode;
+		if (!env[name]) {
+			return lookupParentScope(name, env);
+		}
+
+		if ((env[name] as EnvironmentVariable).kind === "const") {
+			throw new Error("Assignment to const variable");
+		}
+
+		env[name] = { value: rightValue, kind: (env[name] as EnvironmentVariable).kind };
+	}
 }
 
 function evalCallExpression(node: CallExpressionNode, env: Env) {
