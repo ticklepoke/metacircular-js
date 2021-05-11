@@ -122,7 +122,10 @@ Expression  ::=     number                                  number literal
             |       string                                  string literal
             |       Expression BinaryOperator Expression    binary operator combination
             |       UnaryOperator Expression                unary operator combination
+            |       { ObjectKey: Expression }               object literal
+            |       name.name = Expression                  object property assignment
 
+ObjectKey   ::=     string | [ Expression ]                 
 
 Expressions ::=     Expression (, Expression) ...           multiple expressions
 
@@ -150,9 +153,6 @@ Expression  ::=     (parameters) => Expression | Block      arrow function
             |       [ Expressions ]                         array literal
             |       Expression [ Expression ]               array access / object access
             |       Expression [ Expression ] = Expression  array assignment
-            |       { ObjectKey: Expression }               object literal
             |       name.name                               object access
-            |       name.name = Expression                  object property assignment
 
-ObjectKey   ::=     string | [ Expression ]                 
 ```
