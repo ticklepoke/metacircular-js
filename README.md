@@ -4,9 +4,11 @@
 
 # Metacircular-JS
 
-A metacircular evaluator for Javascript, based on the SICP textbook. 
+A metacircular evaluator for Javascript, based on the SICP textbook.
 
-The metacircular evaluator is a story of two recursively mutual functions: `evaluate()` and `apply()`. `evalute()` recursively parses an AST, while `apply()` utilises the host language to invoke features of the interpreted language. 
+The metacircular evaluator is a story of two recursively mutual functions: `evaluate()` and `apply()`. `evalute()` recursively walks and interprets an AST, while `apply()` invokes function calls.
+
+**Note**: A rust based interpreter is currently being built. The Javascript evaluator can still be found in `./js-evaluator`.
 
 <p align="center">
   <img src="/assets/overview.png" alt="overview">
@@ -27,21 +29,21 @@ The evaluator adopts a "while there is work to do, do it" philosophy. This resul
 The host language is used to support features of the interpreted language. This is easier to implement when the host language is similar to the interpreted language. For example, when evaluating and applying an addition `BinaryExpression` in the interpreted language, we can apply it using the underlying host runtime:
 
 ```js
-const operator = "+"
+const operator = '+';
 
 const primitiveBinaryFunctions = {
-    "+": (a, b) => a + b,
-    // ... other binary functions
-}
+	'+': (a, b) => a + b,
+	// ... other binary functions
+};
 
-const callFn = primitiveBinaryFunctions[operator]
+const callFn = primitiveBinaryFunctions[operator];
 
-apply(callFn, a, b)
+apply(callFn, a, b);
 ```
 
 ## Environment Frames
 
-> The terms "environment frame" and "environment object" are used interchangeably in this project. 
+> The terms "environment frame" and "environment object" are used interchangeably in this project.
 
 Without a formal memory model, we maintain variables by passing a context object known as the envrionment (`env`):
 
@@ -65,15 +67,15 @@ Lexical scope is supported in this evaluator. The environemnt object can be recu
 
 ## Shadowing
 
-Nested scopes are able to "capture" variables from the outer scope: 
+Nested scopes are able to "capture" variables from the outer scope:
 
 ```js
-let a = 1
+let a = 1;
 {
-    a = 2; // a becomes a variable in this scope
-    console.log(a) // 2;
+	a = 2; // a becomes a variable in this scope
+	console.log(a); // 2;
 }
-console.log(a) // 2;
+console.log(a); // 2;
 ```
 
 Shadowing is thus implemented like a "capture". If a variable is referenced to in a particular scope, the corresponding environment frame is checked to see if a variable is already defined in its scope. If the variable does not exist in the current frame, the parent frames are checked recyrsively. The resulting variable frame would then be appended to the original environment frame.
@@ -81,25 +83,6 @@ Shadowing is thus implemented like a "capture". If a variable is referenced to i
 ## Closures
 
 This approach of "capturing" variables allows closures to be supported, if a function is invoked in a different locations from where it was defined. The function execution would still be able to remember the variables from its original lexical scope.
-
-## Running
-
-The project can be run by specifying an input Javascript file to be evaluated. Valid Javascript is supported according to the semantics below. 
-
-### Install dependencies
-
-```sh
-yarn install
-```
-
-### Run the evaluator
-```sh
-// Run with nodemon
-yarn dev <filename.js>
-
-// Single execution
-yarn start <filename.js>
-```
 
 ## Semantics
 
@@ -125,28 +108,28 @@ Expression  ::=     number                                  number literal
             |       { ObjectKey: Expression }               object literal
             |       name.name = Expression                  object property assignment
 
-ObjectKey   ::=     string | [ Expression ]                 
+ObjectKey   ::=     string | [ Expression ]
 
 Expressions ::=     Expression (, Expression) ...           multiple expressions
 
-UnaryOperator ::= ! | - | + | ~ | typeof 
+UnaryOperator ::= ! | - | + | ~ | typeof
 
-BinaryOperator ::= + | - | * | / | % | << | >> | >>> | < | > | <= | >= 
+BinaryOperator ::= + | - | * | / | % | << | >> | >>> | < | > | <= | >=
                 | instanceof | in | == | === | != | !== | & | ^ | | | && | || |
 ```
 
-
 There are plans for the following rules to be supported.
+
 ```
 Statement   ::=     function name (parameters) Block        function declaration
             |       return Expression                       return expression
             |       IfStatement                             conditional statement
             |       IfElseStatement                         conditional alternative statement
 
-IfStatement ::=     if (Expression) Block                   
+IfStatement ::=     if (Expression) Block
 
-IfElseStatement ::= IfStatement else 
-                    (Block | IfStatement | IfElseStatement) 
+IfElseStatement ::= IfStatement else
+                    (Block | IfStatement | IfElseStatement)
 
 Expression  ::=     (parameters) => Expression | Block      arrow function
             |       Expression ? Expression : Expression    ternary conditional
