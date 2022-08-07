@@ -65,6 +65,7 @@ dependencies = [
 name = "rs-evaluator"
 version = "0.1.0"
 dependencies = [
+ "lib-ir",
  "wasm-bindgen",
 ]
 
