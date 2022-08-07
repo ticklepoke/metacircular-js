@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "build:wasm": "wasm-pack build --out-dir ../driver/wasm ../rs-evaluator"
+  },
   "dependencies": {
     "parser": "1.0.0"
   },

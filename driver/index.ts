@@ -1,6 +1,8 @@
 import { parse } from "parser";
 import * as fs from "fs";
 
+import { loadWasm } from "./src/loadWasm";
+
 function main() {
 	const args = process.argv;
 
@@ -24,8 +26,11 @@ function main() {
 	}
 
 	const ast = parse(SOURCE_CODE);
-	
+
 	// evaluate using rust
+	loadWasm().then(wasm => {
+		wasm.give("hello");
+	});
 }
 
 main();
