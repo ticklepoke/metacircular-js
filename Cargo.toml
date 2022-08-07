@@ -1,6 +1,7 @@
 [workspace]
 members = [
-	"rs-evaluator"
+	"rs-evaluator",
+	"lib-ir"
 ]
 
 default-members = [
