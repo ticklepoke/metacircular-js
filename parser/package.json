@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "scripts": {
+    "start": "ts-node index.ts",
+    "start:watch": "ndemond -e ts -w ./ -x yarn run start"
+  },
   "devDependencies": {
     "@types/node": "^18.6.4",
     "@typescript-eslint/eslint-plugin": "^5.32.0",
@@ -11,5 +15,8 @@
     "nodemon": "^2.0.19",
     "ts-node": "^10.9.1",
     "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "acorn": "^8.8.0"
   }
 }
