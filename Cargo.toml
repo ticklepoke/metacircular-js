@@ -1,0 +1,12 @@
+[workspace]
+members = [
+	"rs-evaluator"
+]
+
+default-members = [
+	"rs-evaluator"
+]
+
+[profile.release]
+lto = true
+panic = "abort"
