@@ -3,7 +3,7 @@ import * as fs from "fs";
 
 import { loadWasm } from "./src/loadWasm";
 
-function main() {
+async function main() {
 	const args = process.argv;
 
 	if (args.length !== 3 || !args[2].includes(".js")) {
@@ -26,11 +26,17 @@ function main() {
 	}
 
 	const ast = parse(SOURCE_CODE);
+	const serializedAst = JSON.stringify(ast);
 
-	// evaluate using rust
-	loadWasm().then(wasm => {
-		wasm.give("hello");
-	});
+	try {
+		// evaluate using rust
+		const wasm = await loadWasm();
+		wasm.evaluate(serializedAst);
+	} catch (e) {
+		console.error("Error evaluating", e);
+		process.exit(1);
+	}
 }
 
+// (async () => await main())();
 main();
