@@ -8,7 +8,7 @@ export function parse(sourceCode: string): Node {
 	const ast: Node = acornParse(sourceCode, acornOptions);
 
 	// Change top level program to a block statement
-	ast.type = "BlockStatemenet";
+	ast.type = "BlockStatement";
 
 	return ast;
 }

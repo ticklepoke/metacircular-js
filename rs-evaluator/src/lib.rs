@@ -8,8 +8,9 @@ pub fn give(name: &str) -> String {
 
 #[allow(unused_variables)]
 #[wasm_bindgen]
-pub fn evaluate(ast: String) {
+pub fn evaluate(ast: String) -> String {
     let ast = lib_ir::serialize(ast);
+	ast
 
     // pass the ast to the evaluator to run
 }

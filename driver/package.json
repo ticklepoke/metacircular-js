@@ -4,7 +4,7 @@
   "main": "dist/index",
   "license": "MIT",
   "scripts": {
-    "build:wasm": "wasm-pack build --target nodejs --out-dir ../driver/wasm ../rs-evaluator",
+    "build:wasm": "wasm-pack build --target nodejs --dev --out-dir ../driver/wasm ../rs-evaluator",
     "clean": "rm -rf ./dist",
     "tsc": "tsc && mkdir ./dist/wasm && cp ./wasm/* ./dist/wasm",
     "start": "node --experimental-specifier-resolution=node --loader ts-node/esm dist/index.js",

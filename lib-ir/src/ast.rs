@@ -10,7 +10,7 @@ pub struct Position {
 
 #[derive(Deserialize)]
 pub struct SourceLocation {
-    source: String,
+    source: Option<String>,
     start: Position,
     end: Position,
 }
@@ -143,7 +143,6 @@ pub enum LiteralValue {
 
 #[derive(Deserialize)]
 pub struct Program {
-    #[serde(flatten)]
     body: Vec<ProgramBody>,
 }
 
@@ -271,6 +270,7 @@ pub struct ForStatement {
 }
 
 #[derive(Deserialize)]
+#[serde(tag = "type")]
 pub enum ForInitValue {
     VariableDeclaration(VariableDeclaration),
     Expression(Expression),
@@ -286,6 +286,7 @@ pub struct ForInStatement {
 }
 
 #[derive(Deserialize)]
+#[serde(tag = "type")]
 pub enum ForInLeftValue {
     VariableDeclaration(VariableDeclaration),
     Pattern(Pattern),
@@ -317,6 +318,7 @@ pub struct ArrowFunctionExpression {
 }
 
 #[derive(Deserialize)]
+#[serde(tag = "type")]
 pub enum ArrowFunctionBody {
     FunctionBody(FunctionBody),
     Expression(Expression),
@@ -341,6 +343,7 @@ pub struct ArrayExpression {
 }
 
 #[derive(Deserialize)]
+#[serde(tag = "type")]
 pub enum ArrayElements {
     Expression(Expression),
     SpreadElement(SpreadElement),
@@ -354,7 +357,6 @@ pub struct ObjectExpression {
 
 #[derive(Deserialize)]
 pub struct Property {
-    #[serde(flatten)]
     key: PropertyKey,
     value: Expression,
     kind: String, // "init" | "get" | "set"
@@ -364,6 +366,7 @@ pub struct Property {
 }
 
 #[derive(Deserialize)]
+#[serde(tag = "type")]
 pub enum PropertyKey {
     Literal(Literal),
     Identifier(Identifier),
@@ -371,7 +374,6 @@ pub enum PropertyKey {
 
 #[derive(Deserialize)]
 pub struct UnaryExpression {
-    #[serde(flatten)]
     operator: UnaryOperator,
     prefix: bool,
     argument: Expression,
@@ -395,7 +397,6 @@ pub enum UnaryOperator {
 
 #[derive(Deserialize)]
 pub struct BinaryExpression {
-    #[serde(flatten)]
     operator: BinaryOperator,
     left: Expression,
     right: Expression,
@@ -449,7 +450,6 @@ pub enum BinaryOperator {
 
 #[derive(Deserialize)]
 pub struct AssignmentExpression {
-    #[serde(flatten)]
     operator: AssignmentOperator,
     left: Pattern,
     right: Expression,
@@ -492,7 +492,6 @@ pub struct AssignmentProperty {
 
 #[derive(Deserialize)]
 pub struct LogicalExpression {
-    #[serde(flatten)]
     operator: LogicalOperator,
     left: Expression,
     right: Expression,
@@ -508,8 +507,7 @@ pub enum LogicalOperator {
 
 #[derive(Deserialize)]
 pub struct MemberExpression {
-    #[serde(flatten)]
-    object: ExpressionOrSuper,
+    object: Expression,
     property: Expression,
     computed: bool,
 }
@@ -523,15 +521,17 @@ pub struct ConditionalExpression {
 
 #[derive(Deserialize)]
 pub struct CallExpression {
-    #[serde(flatten)]
-    callee: ExpressionOrSuper,
+    callee: MemberIdentifier,
     arguments: Vec<Expression>,
 }
 
 #[derive(Deserialize)]
-pub enum ExpressionOrSuper {
+#[serde(tag = "type")]
+pub enum MemberIdentifier {
+	MemberExpression(MemberExpression),
     Expression(Expression),
     Super(Super),
+	Identifier(Identifier)
 }
 
 #[derive(Deserialize)]
@@ -542,6 +542,7 @@ pub struct NewExpression {
 }
 
 #[derive(Deserialize)]
+#[serde(tag = "type")]
 pub enum NewExpressionArguments {
     Expression(Expression),
     SpreadElement(SpreadElement),
@@ -583,6 +584,7 @@ pub struct TemplateElement {
 }
 
 #[derive(Deserialize)]
+#[serde(tag = "type")]
 pub struct TemplateElementValue {
     cooked: String,
     raw: String,
@@ -656,6 +658,7 @@ pub struct ImportDeclaration {
 }
 
 #[derive(Deserialize)]
+#[serde(tag = "type")]
 pub enum ImportDeclarationSpecifiers {
     ImportSpecifier(ImportSpecifier),
     ImportDefaultSpecifier(ImportDefaultSpecifier),

@@ -29,9 +29,11 @@ async function main() {
 	const serializedAst = JSON.stringify(ast);
 
 	try {
+		console.log(serializedAst);
 		// evaluate using rust
 		const wasm = await loadWasm();
-		wasm.evaluate(serializedAst);
+		const x = wasm.evaluate(serializedAst);
+		console.log(x);
 	} catch (e) {
 		console.error("Error evaluating", e);
 		process.exit(1);
