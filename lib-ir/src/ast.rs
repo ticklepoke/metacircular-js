@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use serde::Deserialize;
-use wasm_bindgen::prelude::*;
 
 #[derive(Deserialize)]
 pub struct Position {
@@ -127,9 +126,8 @@ pub struct Identifier {
 }
 
 #[derive(Deserialize)]
-#[wasm_bindgen]
 pub struct Literal {
-    value: LiteralValue,
+    pub value: LiteralValue,
 }
 
 #[derive(Deserialize)]

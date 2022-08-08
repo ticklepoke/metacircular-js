@@ -3,6 +3,7 @@ import * as fs from "fs";
 
 import { loadWasm } from "./src/loadWasm";
 
+// TODO support repl and cli
 async function main() {
 	const args = process.argv;
 
@@ -29,11 +30,11 @@ async function main() {
 	const serializedAst = JSON.stringify(ast);
 
 	try {
-		console.log(serializedAst);
+		console.log(`Parsed AST:\n\n${serializedAst}\n`);
 		// evaluate using rust
 		const wasm = await loadWasm();
 		const x = wasm.evaluate(serializedAst);
-		console.log(x);
+		console.log(`Evaluator Result: ${x}`);
 	} catch (e) {
 		console.error("Error evaluating", e);
 		process.exit(1);

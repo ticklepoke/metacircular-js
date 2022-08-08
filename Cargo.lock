@@ -67,6 +67,7 @@ name = "rs-evaluator"
 version = "0.1.0"
 dependencies = [
  "lib-ir",
+ "serde_json",
  "wasm-bindgen",
 ]
 
