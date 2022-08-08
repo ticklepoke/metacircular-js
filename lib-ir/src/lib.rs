@@ -2,14 +2,10 @@
 pub mod ast;
 
 // Creates an estree compliant representation from a serialized ast string
-pub fn serialize(ast: String) -> String {
+pub fn serialize(ast: String) -> ast::Node {
     let parsed_result: Result<ast::Node, _> = serde_json::from_str(ast.as_str());
 
-	match parsed_result {
-		Ok(_) => "foo".to_string(),
-		Err(e) => e.to_string()
-	}
-    // parsed_ast
+	parsed_result.expect("Unable to deserialize ast")
 }
 
 #[cfg(test)]
