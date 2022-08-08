@@ -120,7 +120,7 @@ pub enum NodeKind {
     ExportAllDeclaration(ExportAllDeclaration),
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Hash, PartialEq, Eq)]
 pub struct Identifier {
     name: String,
 }
@@ -173,7 +173,7 @@ pub struct Directive {
 
 #[derive(Deserialize)]
 pub struct BlockStatement {
-    body: Vec<Statement>,
+    pub body: Vec<Statement>,
 }
 
 // solitary semicolon
@@ -332,7 +332,7 @@ pub struct VariableDeclaration {
 
 #[derive(Deserialize)]
 pub struct VariableDeclarator {
-    id: Pattern,
+    id: Identifier,
     init: Option<Expression>,
 }
 
@@ -528,10 +528,10 @@ pub struct CallExpression {
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 pub enum MemberIdentifier {
-	MemberExpression(MemberExpression),
+    MemberExpression(MemberExpression),
     Expression(Expression),
     Super(Super),
-	Identifier(Identifier)
+    Identifier(Identifier),
 }
 
 #[derive(Deserialize)]
