@@ -2,13 +2,14 @@ use lib_ir;
 use wasm_bindgen::prelude::*;
 
 mod evaluator;
+mod environment;
 
 #[allow(unused_variables)]
 #[wasm_bindgen]
 pub fn evaluate(ast: String) -> Result<JsValue, JsError> {
     let ast = lib_ir::serialize(ast).map_err(|e| JsError::from(e))?;
 
-    let eval_result = evaluator::evaluate(ast).map_err(|e| JsError::new(e.as_str()))?;
+    let eval_result = evaluator::begin_eval(ast).map_err(|e| JsError::new(e.as_str()))?;
 
     // TODO: extract out to separate module
     let js_value = match eval_result.value {
