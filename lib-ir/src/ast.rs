@@ -19,7 +19,7 @@ pub struct SourceLocation {
 pub struct Node {
     loc: Option<SourceLocation>,
     #[serde(flatten)]
-    kind: NodeKind,
+    pub kind: NodeKind,
 }
 
 // Inheritance chains that do not add extra behaviour
