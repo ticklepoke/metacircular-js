@@ -26,6 +26,7 @@ impl Environment {
         Environment::default()
     }
 
+	// TODO: this leaks implementation details that we need a Rc<RefCell<parent>>
     pub fn extend(&self, parent: Rc<RefCell<Environment>>) -> Rc<RefCell<Self>> {
         let mut new_scope = Environment::new();
         new_scope.parent = Some(Rc::clone(&parent));

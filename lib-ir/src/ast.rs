@@ -173,7 +173,7 @@ pub struct Directive {
 
 #[derive(Deserialize, Clone)]
 pub struct BlockStatement {
-    pub body: Vec<Statement>,
+    pub body: Vec<Node>,
 }
 
 // solitary semicolon
@@ -192,7 +192,7 @@ pub struct WithStatement {
 
 #[derive(Deserialize, Clone)]
 pub struct ReturnStatement {
-    argument: Option<Expression>,
+    pub argument: Option<Expression>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -550,7 +550,7 @@ pub enum NewExpressionArguments {
 
 #[derive(Deserialize, Clone)]
 pub struct SequenceExpression {
-    expressions: Vec<Expression>,
+    expressions: Vec<Node>,
 }
 
 #[derive(Deserialize, Clone)]

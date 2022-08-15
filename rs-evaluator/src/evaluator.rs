@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use lib_ir::ast;
+use lib_ir::ast::{self, Literal, Node, ReturnStatement};
 use lib_ir::ast::{BlockStatement, NodeKind, Statement};
 
 use crate::environment::Environment;
@@ -43,6 +43,30 @@ pub fn eval_block_statement(block: BlockStatement, env: Env) -> EvaluatorResult 
     eval_sequence(body, inner_env)
 }
 
-pub fn eval_sequence(_seq: Vec<Statement>, _env: Env) -> EvaluatorResult {
-    unimplemented!()
+pub fn eval_sequence(seq: Vec<Node>, env: Env) -> EvaluatorResult {
+    if seq.is_empty() {
+        // Empty block in js should return undefined
+        return Ok(Literal {
+            value: ast::LiteralValue::Undefined,
+        });
+    }
+    // TODO: this might be an expensive clone
+    let first_seq = seq.first().unwrap().to_owned();
+    if seq.len() == 1 {
+        return evaluate(first_seq, env);
+    }
+    if let NodeKind::ReturnStatement(return_statement) = first_seq.kind {
+        match return_statement.argument {
+            None => Ok(Literal {
+                value: ast::LiteralValue::Undefined,
+            }),
+            Some(argument) => evaluate(*argument, env),
+        }
+    } else {
+		// HACK most elegant way to pop the first element
+		let mut seq_q = std::collections::VecDeque::from(seq);
+		seq_q.pop_front();
+		let rest = Vec::from(seq_q);
+		eval_sequence(rest, env)
+    }
 }
