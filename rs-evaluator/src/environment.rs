@@ -1,13 +1,15 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use lib_ir::ast;
 
+#[derive(Clone)]
 pub enum DeclarationKind {
     Const,
     Let,
     Var,
 }
 
+#[derive(Clone)]
 pub struct Variable {
     value: Option<ast::Expression>,
     kind: DeclarationKind,
@@ -15,7 +17,7 @@ pub struct Variable {
 
 #[derive(Default)]
 pub struct Environment {
-    parent: Option<Box<Environment>>,
+    parent: Option<Rc<RefCell<Environment>>>,
     values: HashMap<ast::Identifier, Variable>,
 }
 
@@ -24,23 +26,44 @@ impl Environment {
         Environment::default()
     }
 
-    pub fn extend(self) -> Self {
-        let new_scope = Environment::new();
-        new_scope.parent = Some(Box::new(self));
-        new_scope
+    pub fn extend(&self, parent: Rc<RefCell<Environment>>) -> Rc<RefCell<Self>> {
+        let mut new_scope = Environment::new();
+        new_scope.parent = Some(Rc::clone(&parent));
+        Rc::new(RefCell::new(new_scope))
     }
 
-    pub fn lookup(&self, id: &ast::Identifier) -> Option<&Variable> {
+    pub fn lookup(&self, id: &ast::Identifier) -> Option<Variable> {
         if self.values.contains_key(id) {
-            return self.values.get(id);
+            return self.values.get(id).map(|v| v.clone());
         }
-		let mut curr_env = self.parent;
-        while let Some(curr_env) = curr_env {
-            if curr_env.values.contains_key(id) {
-                return curr_env.values.get(id);
+        // recursively lookup parent environments
+        let mut curr: Option<Rc<RefCell<Environment>>>;
+        let mut rc: Rc<RefCell<Environment>>;
+
+        curr = match self.parent {
+            None => return None,
+            Some(ref wrapped_rc) => Some(Rc::clone(wrapped_rc)),
+        };
+
+        loop {
+            rc = match curr {
+                None => return None,
+                Some(ref wrapped_rc) => Rc::clone(wrapped_rc),
+            };
+
+            let borrowed_env = RefCell::borrow(&rc);
+            let maybe_parent = &borrowed_env.parent;
+
+            if borrowed_env.values.contains_key(id) {
+                return borrowed_env.values.get(id).map(|v| v.clone());
+            } else {
+                match maybe_parent {
+                    None => return None,
+                    Some(ref next_rc) => {
+                        curr = Some(Rc::clone(next_rc));
+                    }
+                };
             }
-			let curr_env = curr_env.parent;
         }
-        None
     }
 }
