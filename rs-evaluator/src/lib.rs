@@ -1,10 +1,11 @@
-use js_value_mapper::map_rust_value;
+use js_value::map_rust_value;
 use lib_ir;
 use wasm_bindgen::prelude::*;
 
 mod evaluator;
 mod environment;
-mod js_value_mapper;
+mod js_value;
+mod constants;
 
 #[allow(unused_variables)]
 #[wasm_bindgen]

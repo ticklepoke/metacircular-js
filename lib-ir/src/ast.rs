@@ -136,9 +136,40 @@ pub enum LiteralValue {
     String(String),
     Boolean(bool),
     Null,
-    Number(f64),
+    #[serde(skip)] // TODO: this representation does not correspond to js
+    Number(JsNumber),
     RegExp,
     Undefined,
+}
+
+#[derive(Clone)]
+pub enum JsNumber {
+    Number(f64),
+    Nan,
+}
+
+impl From<f64> for LiteralValue {
+    fn from(f: f64) -> Self {
+        LiteralValue::Number(JsNumber::Number(f))
+    }
+}
+
+impl From<String> for LiteralValue {
+    fn from(s: String) -> Self {
+		LiteralValue::String(s)
+    }
+}
+
+impl From<&str> for LiteralValue {
+    fn from(s: &str) -> Self {
+		LiteralValue::String(s.to_string())
+    }
+}
+
+impl From <bool> for LiteralValue {
+    fn from(b: bool) -> Self {
+		LiteralValue::Boolean(b)
+    }
 }
 
 #[derive(Deserialize, Clone)]
@@ -374,9 +405,9 @@ pub enum PropertyKey {
 
 #[derive(Deserialize, Clone)]
 pub struct UnaryExpression {
-    operator: UnaryOperator,
-    prefix: bool,
-    argument: Expression,
+    pub operator: UnaryOperator,
+    prefix: bool, // Not in use, this is to distinguish from postfix operators (++, --)
+    pub argument: Expression,
 }
 
 #[derive(Deserialize, Clone)]
