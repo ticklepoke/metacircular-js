@@ -1,4 +1,4 @@
-use lib_ir::ast::{JsNumber, LiteralValue};
+use lib_ir::ast::literal::{JsNumber, LiteralValue};
 
 pub const JS_NAN: LiteralValue = LiteralValue::Number(JsNumber::Nan);
 

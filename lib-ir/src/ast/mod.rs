@@ -385,9 +385,9 @@ pub enum UnaryOperator {
 
 #[derive(Deserialize, Clone)]
 pub struct BinaryExpression {
-    operator: BinaryOperator,
-    left: Expression,
-    right: Expression,
+    pub operator: BinaryOperator,
+    pub left: Expression,
+    pub right: Expression,
 }
 
 #[derive(Deserialize, Clone)]
