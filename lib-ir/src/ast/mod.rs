@@ -5,6 +5,7 @@ use serde::Deserialize;
 
 pub mod literal;
 pub mod math;
+pub mod coerced_eq;
 
 #[derive(Deserialize, Clone)]
 pub struct Position {

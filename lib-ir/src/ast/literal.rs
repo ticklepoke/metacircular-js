@@ -1,6 +1,9 @@
 use serde::Deserialize;
 
-use super::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
+use super::{
+    coerced_eq::CoercedEq,
+    math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative},
+};
 
 #[derive(Deserialize, Clone)]
 pub struct Literal {
@@ -209,6 +212,34 @@ impl BitwiseShift for LiteralValue {
                 LiteralValue::from((i1 >> i2) as f64)
             }
             _ => LiteralValue::Number(JsNumber::Nan),
+        }
+    }
+}
+
+// https://262.ecma-international.org/5.1/#sec-11.9.3
+impl CoercedEq for LiteralValue {
+    fn coerced_eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            // Same types
+            (LiteralValue::String(s1), LiteralValue::String(s2)) => s1.eq(s2),
+            (LiteralValue::Boolean(b1), LiteralValue::Boolean(b2)) => b1.eq(b2),
+            (LiteralValue::Number(n1), LiteralValue::Number(n2)) => match (n1, n2) {
+                (JsNumber::Number(n1), JsNumber::Number(n2)) => n1.eq(n2),
+                _ => false,
+            },
+            // String and nums
+            (LiteralValue::String(_), LiteralValue::Number(n)) => n.eq(&self.to_owned().into()),
+            (LiteralValue::Number(n), LiteralValue::String(_)) => n.eq(&other.to_owned().into()),
+
+            (_, LiteralValue::Boolean(_)) | (LiteralValue::Boolean(_), _) => {
+                let left_value: JsNumber = self.to_owned().into();
+                let right_value: JsNumber = other.to_owned().into();
+                left_value.eq(&right_value)
+            }
+
+            (_, LiteralValue::RegExp) | (LiteralValue::RegExp, _) => unimplemented!(),
+            (LiteralValue::Undefined, _) | (LiteralValue::Null, _) => true,
+            _ => false,
         }
     }
 }

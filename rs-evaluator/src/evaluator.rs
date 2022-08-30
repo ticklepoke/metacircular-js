@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use lib_ir::ast::coerced_eq::CoercedEq;
 use lib_ir::ast::literal::{JsNumber, Literal, LiteralValue};
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
 use lib_ir::ast::{self, BinaryExpression, Node, UnaryExpression};
@@ -166,8 +167,8 @@ fn eval_binary_expression(expr: BinaryExpression, env: Env) -> EvaluatorResult {
 
     let evaluated_val = match operator {
         // https://262.ecma-international.org/5.1/#sec-11.9.3
-        ast::BinaryOperator::EqEq => todo!("requires coercion"),
-        ast::BinaryOperator::BangEq => todo!("requires coercion"),
+        ast::BinaryOperator::EqEq => LiteralValue::from(left_value.coerced_eq(&right_value)),
+        ast::BinaryOperator::BangEq => LiteralValue::from(left_value.coerced_neq(&right_value)),
         ast::BinaryOperator::EqEqEq => LiteralValue::from(left_value.eq(&right_value)),
         ast::BinaryOperator::BangEqEq => LiteralValue::from(left_value.ne(&right_value)),
         ast::BinaryOperator::Lt => LiteralValue::from(left_value.lt(&right_value)),
