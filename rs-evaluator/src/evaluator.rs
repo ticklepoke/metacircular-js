@@ -4,11 +4,14 @@ use std::rc::Rc;
 use lib_ir::ast::coerced_eq::CoercedEq;
 use lib_ir::ast::literal::{JsNumber, Literal, LiteralValue};
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
-use lib_ir::ast::{self, BinaryExpression, LogicalExpression, Node, UnaryExpression};
+use lib_ir::ast::{
+    self, BinaryExpression, LogicalExpression, Node, UnaryExpression, VariableDeclaration,
+    VariableDeclarator,
+};
 use lib_ir::ast::{BlockStatement, NodeKind};
 
 use crate::constants::{JS_FALSE, JS_NAN, JS_TRUE};
-use crate::environment::Environment;
+use crate::environment::{Environment, EnvironmentError};
 
 type EvaluatorResult = Result<ast::literal::Literal, EvaluatorError>;
 
@@ -16,13 +19,16 @@ type Env = Rc<RefCell<Environment>>;
 
 pub enum EvaluatorError {
     UnknownError,
+    EnvironmentError(EnvironmentError),
 }
 
 impl EvaluatorError {
-    pub fn as_str(&self) -> &'static str {
-        match self {
+    pub fn as_str(&self) -> String {
+        let s = match self {
             EvaluatorError::UnknownError => "Unknown Error",
-        }
+            EvaluatorError::EnvironmentError(e) => format!("{:?}", e).as_str(),
+        };
+        s.into()
     }
 }
 
@@ -39,6 +45,8 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::UnaryExpression(expr) => eval_unary_expression(expr, env),
         NodeKind::BinaryExpression(expr) => eval_binary_expression(expr, env),
         NodeKind::LogicalExpression(expr) => eval_logical_expression(expr, env),
+        NodeKind::Literal(literal) => Ok(literal),
+        NodeKind::VariableDeclaration(decl) => eval_variable_declaration(decl, env),
         _ => unimplemented!(),
     }
 }
@@ -229,5 +237,35 @@ fn eval_logical_expression(expr: LogicalExpression, env: Env) -> EvaluatorResult
     };
     Ok(Literal {
         value: evaluated_value,
+    })
+}
+
+fn eval_variable_declaration(expr: VariableDeclaration, env: Env) -> EvaluatorResult {
+    let VariableDeclaration { declarations, kind } = expr;
+    for d in declarations {
+        eval_variable_declarator(d, kind.as_str(), Rc::clone(&env))?;
+    }
+    Ok(Literal {
+        value: LiteralValue::Null,
+    })
+}
+
+fn eval_variable_declarator(expr: VariableDeclarator, kind: &str, env: Env) -> EvaluatorResult {
+    let VariableDeclarator { id, init } = expr;
+
+    let value = if let Some(init) = init {
+        evaluate(*init, Rc::clone(&env))?
+    } else {
+        Literal {
+            value: LiteralValue::Undefined,
+        }
+    };
+
+    env.borrow_mut()
+        .define(id, value, kind)
+        .map_err(|e| EvaluatorError::EnvironmentError(e))?;
+
+    Ok(Literal {
+        value: LiteralValue::Null,
     })
 }

@@ -315,14 +315,14 @@ pub enum ArrowFunctionBody {
 
 #[derive(Deserialize, Clone)]
 pub struct VariableDeclaration {
-    declarations: Vec<VariableDeclarator>,
-    kind: String, // "var" | "let" | "const"
+    pub declarations: Vec<VariableDeclarator>,
+    pub kind: String, // "var" | "let" | "const"
 }
 
 #[derive(Deserialize, Clone)]
 pub struct VariableDeclarator {
-    id: Identifier,
-    init: Option<Expression>,
+    pub id: Identifier,
+    pub init: Option<Expression>,
 }
 
 #[derive(Deserialize, Clone)]

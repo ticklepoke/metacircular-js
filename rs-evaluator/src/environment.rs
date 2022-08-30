@@ -1,6 +1,9 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use lib_ir::ast;
+use lib_ir::ast::{
+    self,
+    literal::{Literal, LiteralValue},
+};
 
 #[derive(Clone)]
 pub enum DeclarationKind {
@@ -9,12 +12,29 @@ pub enum DeclarationKind {
     Var,
 }
 
+impl From<&str> for DeclarationKind {
+    fn from(s: &str) -> Self {
+        match s {
+            "const" => DeclarationKind::Const,
+            "let" => DeclarationKind::Let,
+            "var" => DeclarationKind::Var,
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum EnvironmentError {
+    DuplicateDeclaration,
+}
+
 #[derive(Clone)]
 pub struct Variable {
-    value: Option<ast::Expression>,
+    value: Literal,
     kind: DeclarationKind,
 }
 
+// https://262.ecma-international.org/5.1/#sec-10.2.1
 #[derive(Default)]
 pub struct Environment {
     parent: Option<Rc<RefCell<Environment>>>,
@@ -31,6 +51,26 @@ impl Environment {
         let mut new_scope = Environment::new();
         new_scope.parent = Some(Rc::clone(&parent));
         Rc::new(RefCell::new(new_scope))
+    }
+
+    pub fn define(
+        &mut self,
+        id: ast::Identifier,
+        value: Literal,
+        kind: &str,
+    ) -> Result<(), EnvironmentError> {
+        let k = DeclarationKind::from(kind);
+        if self.values.contains_key(&id) {
+            return Err(EnvironmentError::DuplicateDeclaration);
+        }
+
+        self.values.insert(id, Variable { value, kind: k });
+        Ok(())
+    }
+
+    pub fn mutate(&self, id: &ast::Identifier, value: LiteralValue) {
+        // recursively lookup parent frames
+        todo!()
     }
 
     pub fn lookup(&self, id: &ast::Identifier) -> Option<Variable> {
