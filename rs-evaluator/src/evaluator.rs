@@ -4,7 +4,7 @@ use std::rc::Rc;
 use lib_ir::ast::coerced_eq::CoercedEq;
 use lib_ir::ast::literal::{JsNumber, Literal, LiteralValue};
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
-use lib_ir::ast::{self, BinaryExpression, Node, UnaryExpression};
+use lib_ir::ast::{self, BinaryExpression, LogicalExpression, Node, UnaryExpression};
 use lib_ir::ast::{BlockStatement, NodeKind};
 
 use crate::constants::{JS_FALSE, JS_NAN, JS_TRUE};
@@ -38,6 +38,7 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::BlockStatement(block) => eval_block_statement(block, Rc::clone(&env)),
         NodeKind::UnaryExpression(expr) => eval_unary_expression(expr, env),
         NodeKind::BinaryExpression(expr) => eval_binary_expression(expr, env),
+        NodeKind::LogicalExpression(expr) => eval_logical_expression(expr, env),
         _ => unimplemented!(),
     }
 }
@@ -192,5 +193,41 @@ fn eval_binary_expression(expr: BinaryExpression, env: Env) -> EvaluatorResult {
 
     Ok(Literal {
         value: evaluated_val,
+    })
+}
+
+// Account for short circuiting behaviour
+// https://262.ecma-international.org/5.1/#sec-11.11
+fn eval_logical_expression(expr: LogicalExpression, env: Env) -> EvaluatorResult {
+    let LogicalExpression {
+        operator,
+        left,
+        right,
+    } = expr;
+
+    let Literal { value: left_value } = evaluate(*left, Rc::clone(&env))?;
+
+    let left_bool: bool = left_value.into();
+
+    let evaluated_value = match operator {
+        ast::LogicalOperator::And => {
+            if left_bool {
+                let Literal { value: right_value } = evaluate(*right, Rc::clone(&env))?;
+                right_value.into()
+            } else {
+                JS_FALSE
+            }
+        }
+        ast::LogicalOperator::Or => {
+            if left_bool {
+                JS_TRUE
+            } else {
+                let Literal { value: right_value } = evaluate(*right, Rc::clone(&env))?;
+                right_value.into()
+            }
+        }
+    };
+    Ok(Literal {
+        value: evaluated_value,
     })
 }

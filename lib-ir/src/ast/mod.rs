@@ -481,9 +481,9 @@ pub struct AssignmentProperty {
 
 #[derive(Deserialize, Clone)]
 pub struct LogicalExpression {
-    operator: LogicalOperator,
-    left: Expression,
-    right: Expression,
+    pub operator: LogicalOperator,
+    pub left: Expression,
+    pub right: Expression,
 }
 
 #[derive(Deserialize, Clone)]

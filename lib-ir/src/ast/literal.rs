@@ -80,6 +80,23 @@ impl Into<JsNumber> for LiteralValue {
     }
 }
 
+// https://262.ecma-international.org/5.1/#sec-9.2
+#[allow(clippy::from_over_into)]
+impl Into<bool> for LiteralValue {
+    fn into(self) -> bool {
+        match self {
+            LiteralValue::String(s) => !s.is_empty(),
+            LiteralValue::Boolean(b) => b,
+            LiteralValue::Number(n) => match n {
+                JsNumber::Number(n) => n != 0.0,
+                JsNumber::Nan => false,
+            },
+            LiteralValue::RegExp => unimplemented!(),
+            LiteralValue::Null | LiteralValue::Undefined => false,
+        }
+    }
+}
+
 // https://262.ecma-international.org/5.1/#sec-11.8.5
 // TODO: into<LiteralValue> if we want to support objects, analagous to ToPrimitive()
 impl PartialOrd for LiteralValue {
