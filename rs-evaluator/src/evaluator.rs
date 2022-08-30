@@ -5,8 +5,8 @@ use lib_ir::ast::coerced_eq::CoercedEq;
 use lib_ir::ast::literal::{JsNumber, Literal, LiteralValue};
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
 use lib_ir::ast::{
-    self, BinaryExpression, LogicalExpression, Node, UnaryExpression, VariableDeclaration,
-    VariableDeclarator,
+    self, BinaryExpression, Identifier, LogicalExpression, Node, UnaryExpression,
+    VariableDeclaration, VariableDeclarator,
 };
 use lib_ir::ast::{BlockStatement, NodeKind};
 
@@ -47,6 +47,7 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::LogicalExpression(expr) => eval_logical_expression(expr, env),
         NodeKind::Literal(literal) => Ok(literal),
         NodeKind::VariableDeclaration(decl) => eval_variable_declaration(decl, env),
+        NodeKind::Identifier(id) => eval_identifier(id, env),
         _ => unimplemented!(),
     }
 }
@@ -268,4 +269,14 @@ fn eval_variable_declarator(expr: VariableDeclarator, kind: &str, env: Env) -> E
     Ok(Literal {
         value: LiteralValue::Null,
     })
+}
+
+fn eval_identifier(id: Identifier, env: Env) -> EvaluatorResult {
+    let literal = env.borrow().lookup(&id).map_or(
+        Literal {
+            value: LiteralValue::Undefined,
+        },
+        |v| v.value,
+    );
+    Ok(literal)
 }

@@ -127,7 +127,7 @@ pub enum NodeKind {
 
 #[derive(Deserialize, Hash, PartialEq, Eq, Clone)]
 pub struct Identifier {
-    name: String,
+    pub name: String,
 }
 
 #[derive(Deserialize, Clone)]

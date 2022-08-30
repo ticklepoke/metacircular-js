@@ -30,7 +30,7 @@ pub enum EnvironmentError {
 
 #[derive(Clone)]
 pub struct Variable {
-    value: Literal,
+    pub value: Literal,
     kind: DeclarationKind,
 }
 
