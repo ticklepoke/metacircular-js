@@ -1,13 +1,15 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use lib_ir::ast::{self, JsNumber, Literal, LiteralValue, Node, UnaryExpression};
+use lib_ir::ast::literal::{JsNumber, Literal, LiteralValue};
+use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
+use lib_ir::ast::{self, BinaryExpression, Node, UnaryExpression};
 use lib_ir::ast::{BlockStatement, NodeKind};
 
 use crate::constants::{JS_FALSE, JS_NAN, JS_TRUE};
 use crate::environment::Environment;
 
-type EvaluatorResult = Result<ast::Literal, EvaluatorError>;
+type EvaluatorResult = Result<ast::literal::Literal, EvaluatorError>;
 
 type Env = Rc<RefCell<Environment>>;
 
@@ -34,6 +36,7 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::Program(_) => unreachable!(),
         NodeKind::BlockStatement(block) => eval_block_statement(block, Rc::clone(&env)),
         NodeKind::UnaryExpression(expr) => eval_unary_expression(expr, env),
+        NodeKind::BinaryExpression(expr) => eval_binary_expression(expr, env),
         _ => unimplemented!(),
     }
 }
@@ -49,7 +52,7 @@ pub fn eval_sequence(seq: Vec<Node>, env: Env) -> EvaluatorResult {
     if seq.is_empty() {
         // Empty block in js should return undefined
         return Ok(Literal {
-            value: ast::LiteralValue::Undefined,
+            value: ast::literal::LiteralValue::Undefined,
         });
     }
     // TODO: this might be an expensive clone
@@ -60,7 +63,7 @@ pub fn eval_sequence(seq: Vec<Node>, env: Env) -> EvaluatorResult {
     if let NodeKind::ReturnStatement(return_statement) = first_seq.kind {
         match return_statement.argument {
             None => Ok(Literal {
-                value: ast::LiteralValue::Undefined,
+                value: ast::literal::LiteralValue::Undefined,
             }),
             Some(argument) => evaluate(*argument, env),
         }
@@ -73,6 +76,7 @@ pub fn eval_sequence(seq: Vec<Node>, env: Env) -> EvaluatorResult {
     }
 }
 
+// https://262.ecma-international.org/5.1/#sec-11.4
 pub fn eval_unary_expression(node: UnaryExpression, env: Env) -> EvaluatorResult {
     let UnaryExpression {
         operator, argument, ..
@@ -88,7 +92,7 @@ pub fn eval_unary_expression(node: UnaryExpression, env: Env) -> EvaluatorResult
             ast::UnaryOperator::Bang => LiteralValue::from(s.len() == 0),
             ast::UnaryOperator::TypeOf => LiteralValue::from("string"),
             ast::UnaryOperator::Void => LiteralValue::from(s),
-            ast::UnaryOperator::Delete => unimplemented!(), // TODO: This actually depends on whether we want the evaluator to be lazy or eager. Lazy eval will return false while eager eval will return true
+            ast::UnaryOperator::Delete => JS_TRUE,
         },
         LiteralValue::Boolean(b) => match operator {
             ast::UnaryOperator::Minus => match b {
@@ -102,7 +106,7 @@ pub fn eval_unary_expression(node: UnaryExpression, env: Env) -> EvaluatorResult
             ast::UnaryOperator::Bang => LiteralValue::from(!b),
             ast::UnaryOperator::TypeOf => LiteralValue::from("boolean"),
             ast::UnaryOperator::Void => LiteralValue::Undefined,
-            ast::UnaryOperator::Delete => unimplemented!(), // TODO: same explanation as deleting strings
+            ast::UnaryOperator::Delete => JS_TRUE,
         },
         LiteralValue::Null => match operator {
             ast::UnaryOperator::Minus => LiteralValue::from(-0.0),
@@ -110,7 +114,7 @@ pub fn eval_unary_expression(node: UnaryExpression, env: Env) -> EvaluatorResult
             ast::UnaryOperator::Bang => JS_TRUE,
             ast::UnaryOperator::TypeOf => LiteralValue::from("object"),
             ast::UnaryOperator::Void => LiteralValue::Undefined,
-            ast::UnaryOperator::Delete => unimplemented!(), // TODO: same explanation as deleting strings
+            ast::UnaryOperator::Delete => JS_TRUE,
         },
         LiteralValue::Number(n) => match n {
             JsNumber::Number(n) => match operator {
@@ -119,7 +123,7 @@ pub fn eval_unary_expression(node: UnaryExpression, env: Env) -> EvaluatorResult
                 ast::UnaryOperator::Bang => LiteralValue::from(n == 0.0),
                 ast::UnaryOperator::TypeOf => LiteralValue::from("number"),
                 ast::UnaryOperator::Void => LiteralValue::Undefined,
-                ast::UnaryOperator::Delete => todo!(), // TODO: same explanation as deleting strings
+                ast::UnaryOperator::Delete => JS_TRUE,
             },
             JsNumber::Nan => match operator {
                 ast::UnaryOperator::Minus | ast::UnaryOperator::Plus => JS_NAN,
@@ -143,6 +147,46 @@ pub fn eval_unary_expression(node: UnaryExpression, env: Env) -> EvaluatorResult
             ast::UnaryOperator::Void => LiteralValue::Undefined,
             ast::UnaryOperator::Delete => JS_FALSE,
         },
+    };
+
+    Ok(Literal {
+        value: evaluated_val,
+    })
+}
+
+fn eval_binary_expression(expr: BinaryExpression, env: Env) -> EvaluatorResult {
+    let BinaryExpression {
+        left,
+        right,
+        operator,
+    } = expr;
+
+    let Literal { value: left_value } = evaluate(*left, Rc::clone(&env))?;
+    let Literal { value: right_value } = evaluate(*right, Rc::clone(&env))?;
+
+    let evaluated_val = match operator {
+        // https://262.ecma-international.org/5.1/#sec-11.9.3
+        ast::BinaryOperator::EqEq => todo!("requires coercion"),
+        ast::BinaryOperator::BangEq => todo!("requires coercion"),
+        ast::BinaryOperator::EqEqEq => LiteralValue::from(left_value.eq(&right_value)),
+        ast::BinaryOperator::BangEqEq => LiteralValue::from(left_value.ne(&right_value)),
+        ast::BinaryOperator::Lt => LiteralValue::from(left_value.lt(&right_value)),
+        ast::BinaryOperator::Leq => LiteralValue::from(left_value.le(&right_value)),
+        ast::BinaryOperator::Gt => LiteralValue::from(left_value.gt(&right_value)),
+        ast::BinaryOperator::Geq => LiteralValue::from(left_value.ge(&right_value)),
+        ast::BinaryOperator::LtLt => left_value.left_shift(&right_value),
+        ast::BinaryOperator::GtGt => left_value.unsigned_right_shift(&right_value),
+        ast::BinaryOperator::GtGtGt => left_value.signed_right_shift(&right_value),
+        ast::BinaryOperator::Plus => left_value.add(&right_value),
+        ast::BinaryOperator::Minus => left_value.sub(&right_value),
+        ast::BinaryOperator::Mult => left_value.mul(&right_value),
+        ast::BinaryOperator::Div => left_value.div(&right_value),
+        ast::BinaryOperator::Mod => left_value.modulo(&right_value),
+        ast::BinaryOperator::Pipe => left_value.bitwise_or(&right_value),
+        ast::BinaryOperator::Caret => left_value.bitwise_xor(&right_value),
+        ast::BinaryOperator::And => left_value.bitwise_and(&right_value),
+        ast::BinaryOperator::In => unimplemented!(),
+        ast::BinaryOperator::Instanceof => todo!("requires primitive type info"),
     };
 
     Ok(Literal {

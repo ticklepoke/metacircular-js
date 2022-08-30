@@ -8,7 +8,7 @@ pub mod ast;
 pub fn serialize(ast: String) -> Result<ast::Node, Error> {
     let parsed_result: Result<ast::Node, _> = serde_json::from_str(ast.as_str());
 
-	parsed_result
+    parsed_result
 }
 
 #[cfg(test)]

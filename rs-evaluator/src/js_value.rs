@@ -13,7 +13,7 @@ pub fn map_rust_value(eval_result: Literal) -> JsValue {
         lib_ir::ast::LiteralValue::Null => JsValue::NULL,
         lib_ir::ast::LiteralValue::Number(n) => match n {
             lib_ir::ast::JsNumber::Number(n) => JsValue::from(n),
-            lib_ir::ast::JsNumber::Nan => JsValue::from("NaN"), 
+            lib_ir::ast::JsNumber::Nan => JsValue::from("NaN"),
         },
         lib_ir::ast::LiteralValue::RegExp => unreachable!(),
         lib_ir::ast::LiteralValue::Undefined => JsValue::UNDEFINED,

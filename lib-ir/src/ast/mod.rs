@@ -1,6 +1,10 @@
 #![allow(dead_code)]
 
+use self::literal::Literal;
 use serde::Deserialize;
+
+pub mod literal;
+pub mod math;
 
 #[derive(Deserialize, Clone)]
 pub struct Position {
@@ -123,53 +127,6 @@ pub enum NodeKind {
 #[derive(Deserialize, Hash, PartialEq, Eq, Clone)]
 pub struct Identifier {
     name: String,
-}
-
-#[derive(Deserialize, Clone)]
-pub struct Literal {
-    pub value: LiteralValue,
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(untagged)]
-pub enum LiteralValue {
-    String(String),
-    Boolean(bool),
-    Null,
-    #[serde(skip)] // TODO: this representation does not correspond to js
-    Number(JsNumber),
-    RegExp,
-    Undefined,
-}
-
-#[derive(Clone)]
-pub enum JsNumber {
-    Number(f64),
-    Nan,
-}
-
-impl From<f64> for LiteralValue {
-    fn from(f: f64) -> Self {
-        LiteralValue::Number(JsNumber::Number(f))
-    }
-}
-
-impl From<String> for LiteralValue {
-    fn from(s: String) -> Self {
-		LiteralValue::String(s)
-    }
-}
-
-impl From<&str> for LiteralValue {
-    fn from(s: &str) -> Self {
-		LiteralValue::String(s.to_string())
-    }
-}
-
-impl From <bool> for LiteralValue {
-    fn from(b: bool) -> Self {
-		LiteralValue::Boolean(b)
-    }
 }
 
 #[derive(Deserialize, Clone)]
