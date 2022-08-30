@@ -30,6 +30,7 @@ impl PartialEq for LiteralValue {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<String> for LiteralValue {
     fn into(self) -> String {
         match self {
@@ -53,6 +54,7 @@ impl Into<String> for LiteralValue {
 }
 
 // https://262.ecma-international.org/5.1/#sec-9.3.1
+#[allow(clippy::from_over_into)]
 impl Into<JsNumber> for LiteralValue {
     fn into(self) -> JsNumber {
         match self {
