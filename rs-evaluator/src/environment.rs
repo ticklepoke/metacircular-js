@@ -35,7 +35,7 @@ impl Environment {
 
     pub fn lookup(&self, id: &ast::Identifier) -> Option<Variable> {
         if self.values.contains_key(id) {
-            return self.values.get(id).map(|v| v.clone());
+            return self.values.get(id).cloned();
         }
         // recursively lookup parent environments
         let mut curr: Option<Rc<RefCell<Environment>>>;
@@ -56,7 +56,7 @@ impl Environment {
             let maybe_parent = &borrowed_env.parent;
 
             if borrowed_env.values.contains_key(id) {
-                return borrowed_env.values.get(id).map(|v| v.clone());
+                return borrowed_env.values.get(id).cloned();
             } else {
                 match maybe_parent {
                     None => return None,

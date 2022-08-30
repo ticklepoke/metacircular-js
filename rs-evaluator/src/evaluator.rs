@@ -89,7 +89,7 @@ pub fn eval_unary_expression(node: UnaryExpression, env: Env) -> EvaluatorResult
     let evaluated_val = match value {
         LiteralValue::String(s) => match operator {
             ast::UnaryOperator::Minus | ast::UnaryOperator::Plus => JS_NAN,
-            ast::UnaryOperator::Bang => LiteralValue::from(s.len() == 0),
+            ast::UnaryOperator::Bang => LiteralValue::from(s.is_empty()),
             ast::UnaryOperator::TypeOf => LiteralValue::from("string"),
             ast::UnaryOperator::Void => LiteralValue::from(s),
             ast::UnaryOperator::Delete => JS_TRUE,
