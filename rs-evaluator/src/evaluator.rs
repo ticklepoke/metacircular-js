@@ -40,6 +40,7 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
     match tree.kind {
         NodeKind::Program(_) => unreachable!(),
         NodeKind::BlockStatement(block) => eval_block_statement(block, Rc::clone(&env)),
+        NodeKind::ExpressionStatement(expr) => evaluate(*expr.expression, env),
         NodeKind::UnaryExpression(expr) => eval_unary_expression(expr, env),
         NodeKind::BinaryExpression(expr) => eval_binary_expression(expr, env),
         NodeKind::LogicalExpression(expr) => eval_logical_expression(expr, env),

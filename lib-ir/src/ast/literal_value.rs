@@ -6,7 +6,7 @@ use super::{
     math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum LiteralValue {
     String(String),
     Boolean(bool),

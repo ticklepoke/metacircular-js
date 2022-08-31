@@ -2,13 +2,13 @@ use serde::Deserialize;
 
 use super::literal_value::{de_from_literal, LiteralValue};
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Literal {
     #[serde(deserialize_with = "de_from_literal")]
     pub value: LiteralValue,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum JsNumber {
     Number(f64),
     Nan,

@@ -15,7 +15,7 @@ pub fn map_rust_value(eval_result: Literal) -> JsValue {
         },
         LiteralValue::Null => JsValue::NULL,
         LiteralValue::Number(n) => match n {
-            JsNumber::Number(n) => JsValue::from(n),
+            JsNumber::Number(n) => JsValue::from_f64(n),
             JsNumber::Nan => JsValue::from("NaN"),
         },
         LiteralValue::RegExp => unreachable!(),

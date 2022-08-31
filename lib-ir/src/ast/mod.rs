@@ -152,7 +152,7 @@ pub struct Function {
 
 #[derive(Deserialize, Clone)]
 pub struct ExpressionStatement {
-    expression: Expression,
+    pub expression: Expression,
 }
 
 #[derive(Deserialize, Clone)]
