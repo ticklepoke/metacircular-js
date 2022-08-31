@@ -2,7 +2,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use lib_ir::ast::coerced_eq::CoercedEq;
-use lib_ir::ast::literal::{JsNumber, Literal, LiteralValue};
+use lib_ir::ast::literal::{JsNumber, Literal};
+use lib_ir::ast::literal_value::LiteralValue;
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
 use lib_ir::ast::{
     self, AssignmentExpression, AssignmentOperator, BinaryExpression, Identifier,
@@ -61,7 +62,7 @@ pub fn eval_sequence(seq: Vec<Node>, env: Env) -> EvaluatorResult {
     if seq.is_empty() {
         // Empty block in js should return undefined
         return Ok(Literal {
-            value: ast::literal::LiteralValue::Undefined,
+            value: ast::literal_value::LiteralValue::Undefined,
         });
     }
     // TODO: this might be an expensive clone
@@ -72,7 +73,7 @@ pub fn eval_sequence(seq: Vec<Node>, env: Env) -> EvaluatorResult {
     if let NodeKind::ReturnStatement(return_statement) = first_seq.kind {
         match return_statement.argument {
             None => Ok(Literal {
-                value: ast::literal::LiteralValue::Undefined,
+                value: ast::literal_value::LiteralValue::Undefined,
             }),
             Some(argument) => evaluate(*argument, env),
         }

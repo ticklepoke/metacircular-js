@@ -1,4 +1,7 @@
-use lib_ir::ast::literal::{JsNumber, Literal, LiteralValue};
+use lib_ir::ast::{
+    literal::{JsNumber, Literal},
+    literal_value::LiteralValue,
+};
 use wasm_bindgen::prelude::*;
 
 // TODO: we can evaluate more than just literals, objects would be returned

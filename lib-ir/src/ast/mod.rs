@@ -4,6 +4,7 @@ use self::literal::Literal;
 use serde::Deserialize;
 
 pub mod literal;
+pub mod literal_value;
 pub mod math;
 pub mod coerced_eq;
 
