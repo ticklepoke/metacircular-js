@@ -1,9 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use lib_ir::ast::{
-    self,
-    literal::{Literal, LiteralValue},
-};
+use lib_ir::ast::{self, literal::Literal};
 
 #[derive(Clone)]
 pub enum DeclarationKind {
@@ -26,6 +23,8 @@ impl From<&str> for DeclarationKind {
 #[derive(Debug)]
 pub enum EnvironmentError {
     DuplicateDeclaration,
+    ReassignmentConst,
+    UndefinedVariable,
 }
 
 #[derive(Clone)]
@@ -68,9 +67,57 @@ impl Environment {
         Ok(())
     }
 
-    pub fn mutate(&self, id: &ast::Identifier, value: LiteralValue) {
+    pub fn update(&mut self, id: ast::Identifier, value: Literal) -> Result<(), EnvironmentError> {
+        if let Some(Variable { kind, .. }) = self.values.get(&id) {
+            if let DeclarationKind::Const = kind {
+                return Err(EnvironmentError::ReassignmentConst);
+            }
+            self.values.insert(
+                id,
+                Variable {
+                    value,
+                    kind: kind.to_owned(),
+                },
+            );
+            return Ok(());
+        };
         // recursively lookup parent frames
-        todo!()
+        let mut curr: Option<Rc<RefCell<Environment>>>;
+        let mut rc: Rc<RefCell<Environment>>;
+
+        curr = match self.parent {
+            None => return Err(EnvironmentError::UndefinedVariable),
+            Some(ref wrapped_rc) => Some(Rc::clone(&wrapped_rc)),
+        };
+        loop {
+            rc = match curr {
+                None => return Err(EnvironmentError::UndefinedVariable),
+                Some(ref wrapped_rc) => Rc::clone(&wrapped_rc),
+            };
+
+            let borrowed_env = RefCell::borrow(&rc);
+            let maybe_parent = &borrowed_env.parent;
+            if let Some(Variable { kind, .. }) = self.values.get(&id) {
+                if let DeclarationKind::Const = kind {
+                    return Err(EnvironmentError::ReassignmentConst);
+                }
+                self.values.insert(
+                    id,
+                    Variable {
+                        value,
+                        kind: kind.to_owned(),
+                    },
+                );
+                return Ok(());
+            } else {
+                match maybe_parent {
+                    None => return Err(EnvironmentError::UndefinedVariable),
+                    Some(ref next_rc) => {
+                        curr = Some(Rc::clone(next_rc));
+                    }
+                };
+            }
+        }
     }
 
     pub fn lookup(&self, id: &ast::Identifier) -> Option<Variable> {

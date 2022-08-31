@@ -5,8 +5,8 @@ use lib_ir::ast::coerced_eq::CoercedEq;
 use lib_ir::ast::literal::{JsNumber, Literal, LiteralValue};
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
 use lib_ir::ast::{
-    self, BinaryExpression, Identifier, LogicalExpression, Node, UnaryExpression,
-    VariableDeclaration, VariableDeclarator,
+    self, AssignmentExpression, AssignmentOperator, BinaryExpression, Identifier,
+    LogicalExpression, Node, UnaryExpression, VariableDeclaration, VariableDeclarator,
 };
 use lib_ir::ast::{BlockStatement, NodeKind};
 
@@ -18,17 +18,14 @@ type EvaluatorResult = Result<ast::literal::Literal, EvaluatorError>;
 type Env = Rc<RefCell<Environment>>;
 
 pub enum EvaluatorError {
-    UnknownError,
     EnvironmentError(EnvironmentError),
 }
 
 impl EvaluatorError {
     pub fn as_str(&self) -> String {
-        let s = match self {
-            EvaluatorError::UnknownError => "Unknown Error",
-            EvaluatorError::EnvironmentError(e) => format!("{:?}", e).as_str(),
-        };
-        s.into()
+        match self {
+            EvaluatorError::EnvironmentError(e) => format!("{:?}", e),
+        }
     }
 }
 
@@ -48,6 +45,7 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::Literal(literal) => Ok(literal),
         NodeKind::VariableDeclaration(decl) => eval_variable_declaration(decl, env),
         NodeKind::Identifier(id) => eval_identifier(id, env),
+        NodeKind::AssignmentExpression(expr) => eval_assignment_expr(expr, env),
         _ => unimplemented!(),
     }
 }
@@ -279,4 +277,33 @@ fn eval_identifier(id: Identifier, env: Env) -> EvaluatorResult {
         |v| v.value,
     );
     Ok(literal)
+}
+
+fn eval_assignment_expr(expr: AssignmentExpression, env: Env) -> EvaluatorResult {
+    let AssignmentExpression {
+        left,
+        right,
+        operator,
+    } = expr;
+
+    let right_copy = right.clone();
+    let right_value = evaluate(*right, Rc::clone(&env))?;
+
+    match operator {
+        AssignmentOperator::Eq => {}
+        _ => unimplemented!("Only Assignment using = allowed"),
+    };
+
+    if let NodeKind::MemberExpression(_) = right_copy.kind {
+        todo!("Updating a property of an object")
+    } else if let NodeKind::Identifier(id) = left.kind {
+        env.borrow_mut()
+            .update(id, right_value)
+            .map_err(|e| EvaluatorError::EnvironmentError(e))?;
+    } else {
+        unreachable!()
+    }
+    Ok(Literal {
+        value: LiteralValue::Undefined,
+    })
 }

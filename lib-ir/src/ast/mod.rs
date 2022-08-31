@@ -439,9 +439,9 @@ pub enum BinaryOperator {
 
 #[derive(Deserialize, Clone)]
 pub struct AssignmentExpression {
-    operator: AssignmentOperator,
-    left: Pattern,
-    right: Expression,
+    pub operator: AssignmentOperator,
+    pub left: Pattern,
+    pub right: Expression,
 }
 
 #[derive(Deserialize, Clone)]
