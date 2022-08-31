@@ -220,7 +220,7 @@ fn eval_logical_expression(expr: LogicalExpression, env: Env) -> EvaluatorResult
         ast::LogicalOperator::And => {
             if left_bool {
                 let Literal { value: right_value } = evaluate(*right, Rc::clone(&env))?;
-                right_value.into()
+                right_value
             } else {
                 JS_FALSE
             }
@@ -230,7 +230,7 @@ fn eval_logical_expression(expr: LogicalExpression, env: Env) -> EvaluatorResult
                 JS_TRUE
             } else {
                 let Literal { value: right_value } = evaluate(*right, Rc::clone(&env))?;
-                right_value.into()
+                right_value
             }
         }
     };
@@ -262,7 +262,7 @@ fn eval_variable_declarator(expr: VariableDeclarator, kind: &str, env: Env) -> E
 
     env.borrow_mut()
         .define(id, value, kind)
-        .map_err(|e| EvaluatorError::EnvironmentError(e))?;
+        .map_err(EvaluatorError::EnvironmentError)?;
 
     Ok(Literal {
         value: LiteralValue::Null,
@@ -299,7 +299,7 @@ fn eval_assignment_expr(expr: AssignmentExpression, env: Env) -> EvaluatorResult
     } else if let NodeKind::Identifier(id) = left.kind {
         env.borrow_mut()
             .update(id, right_value)
-            .map_err(|e| EvaluatorError::EnvironmentError(e))?;
+            .map_err(EvaluatorError::EnvironmentError)?;
     } else {
         unreachable!()
     }

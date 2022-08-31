@@ -87,12 +87,12 @@ impl Environment {
 
         curr = match self.parent {
             None => return Err(EnvironmentError::UndefinedVariable),
-            Some(ref wrapped_rc) => Some(Rc::clone(&wrapped_rc)),
+            Some(ref wrapped_rc) => Some(Rc::clone(wrapped_rc)),
         };
         loop {
             rc = match curr {
                 None => return Err(EnvironmentError::UndefinedVariable),
-                Some(ref wrapped_rc) => Rc::clone(&wrapped_rc),
+                Some(ref wrapped_rc) => Rc::clone(wrapped_rc),
             };
 
             let borrowed_env = RefCell::borrow(&rc);
