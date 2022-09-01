@@ -23,7 +23,7 @@ pub struct SourceLocation {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Node {
-    loc: Option<SourceLocation>,
+    pub loc: Option<SourceLocation>,
     #[serde(flatten)]
     pub kind: NodeKind,
 }
@@ -292,18 +292,18 @@ pub struct FunctionDeclaration {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct FunctionExpression {
-    id: Option<Identifier>,
-    params: Vec<Pattern>,
-    body: FunctionBody,
-    generator: bool,
+    pub id: Option<Identifier>,
+    pub params: Vec<Pattern>,
+    pub body: FunctionBody,
+    pub generator: bool,
 }
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct ArrowFunctionExpression {
-    id: Option<Identifier>,
-    params: Vec<Pattern>,
+    pub id: Option<Identifier>, // always none, but estree spec leaves this null field present
+    pub params: Vec<Pattern>,
     #[serde(flatten)]
-    body: ArrowFunctionBody,
+    pub body: ArrowFunctionBody,
     generator: bool, // false
 }
 

@@ -6,8 +6,9 @@ use lib_ir::ast::literal::{JsNumber, Literal};
 use lib_ir::ast::literal_value::LiteralValue;
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
 use lib_ir::ast::{
-    self, AssignmentExpression, AssignmentOperator, BinaryExpression, FunctionDeclaration,
-    Identifier, LogicalExpression, Node, UnaryExpression, VariableDeclaration, VariableDeclarator,
+    self, ArrowFunctionExpression, AssignmentExpression, AssignmentOperator, BinaryExpression,
+    FunctionDeclaration, FunctionExpression, Identifier, LogicalExpression, Node, ReturnStatement,
+    UnaryExpression, VariableDeclaration, VariableDeclarator,
 };
 use lib_ir::ast::{BlockStatement, NodeKind};
 
@@ -51,6 +52,8 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::Identifier(id) => eval_identifier(id, env),
         NodeKind::AssignmentExpression(expr) => eval_assignment_expr(expr, env),
         NodeKind::FunctionDeclaration(f) => eval_function_declaration(f, env),
+        NodeKind::FunctionExpression(f) => eval_function_expression(f, env),
+        NodeKind::ArrowFunctionExpression(f) => eval_arrow_function(f, env),
         _ => unimplemented!(),
     }
 }
@@ -311,10 +314,34 @@ fn eval_function_declaration(f: FunctionDeclaration, env: Env) -> EvaluatorResul
     let FunctionDeclaration {
         id, params, body, ..
     } = f;
-    let closure = Closure::new(params, body, Rc::clone(&env));
+    let closure = Closure::new(params, body, Some(id.name.to_owned()), Rc::clone(&env));
     // Currently does not hoist
     env.borrow_mut()
         .define(id, EvaluatorValue::from(closure), "let")
         .map_err(EvaluatorError::EnvironmentError)?;
     Ok(EvaluatorValue::from(JS_UNDEFINED))
+}
+
+// TODO: no lexical this binding present yet
+fn eval_function_expression(f: FunctionExpression, env: Env) -> EvaluatorResult {
+    let FunctionExpression {
+        id, params, body, ..
+    } = f;
+    let closure = Closure::new(params, body, id.map(|id| id.name), Rc::clone(&env));
+    Ok(EvaluatorValue::from(closure))
+}
+
+fn eval_arrow_function(f: ArrowFunctionExpression, env: Env) -> EvaluatorResult {
+    let ArrowFunctionExpression { params, body, .. } = f;
+    let normalized_body = match body {
+        ast::ArrowFunctionBody::FunctionBody(b) => b,
+        ast::ArrowFunctionBody::Expression(e) => BlockStatement {
+            body: vec![Node {
+                loc: None,
+                kind: NodeKind::ReturnStatement(ReturnStatement { argument: Some(e) }),
+            }],
+        },
+    };
+    let closure = Closure::new(params, normalized_body, None, Rc::clone(&env));
+    Ok(EvaluatorValue::from(closure))
 }

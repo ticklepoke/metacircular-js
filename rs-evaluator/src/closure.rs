@@ -4,6 +4,7 @@ use crate::evaluator::Env;
 
 #[derive(Clone, Debug)]
 pub struct Closure {
+    pub name: Option<String>,
     pub parameters: Vec<Expression>,
     pub env: Env,
     // single expression arrow functions will be changed into block statements with return statements
@@ -11,8 +12,14 @@ pub struct Closure {
 }
 
 impl Closure {
-    pub fn new(parameters: Vec<Expression>, body: BlockStatement, env: Env) -> Self {
+    pub fn new(
+        parameters: Vec<Expression>,
+        body: BlockStatement,
+        name: Option<String>,
+        env: Env,
+    ) -> Self {
         Closure {
+            name,
             parameters,
             env,
             body,
