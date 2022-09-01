@@ -37,11 +37,11 @@ mod tests {
             if let LiteralValue::Number(n) = eval_result.value {
                 if let JsNumber::Number(n) = n {
                     assert_eq!(2.0, n);
-					return;
+                    return;
                 }
             }
-        } 
-		unreachable!()
+        }
+        unreachable!()
     }
 
     #[test]
@@ -57,10 +57,28 @@ mod tests {
             if let LiteralValue::Number(n) = eval_result.value {
                 if let JsNumber::Number(n) = n {
                     assert_eq!(1.0, n);
-					return;
+                    return;
                 }
             }
-        } 
-		unreachable!()
+        }
+        unreachable!()
+    }
+
+    #[test]
+    pub fn scope() {
+        let ast = r#"
+		{"type":"BlockStatement","start":0,"end":25,"body":[{"type":"VariableDeclaration","start":0,"end":10,"declarations":[{"type":"VariableDeclarator","start":4,"end":9,"id":{"type":"Identifier","start":4,"end":5,"name":"x"},"init":{"type":"Literal","start":8,"end":9,"value":1,"raw":"1"}}],"kind":"let"},{"type":"BlockStatement","start":11,"end":22,"body":[{"type":"ExpressionStatement","start":14,"end":20,"expression":{"type":"AssignmentExpression","start":14,"end":19,"operator":"=","left":{"type":"Identifier","start":14,"end":15,"name":"x"},"right":{"type":"Literal","start":18,"end":19,"value":2,"raw":"2"}}}]},{"type":"ExpressionStatement","start":23,"end":25,"expression":{"type":"Identifier","start":23,"end":24,"name":"x"}}],"sourceType":"script"}
+		"#;
+        let ast = lib_ir::serialize(ast.to_string()).expect("Unable to deserialize ast");
+
+        let eval_result = evaluator::begin_eval(ast).expect("Unable to eval");
+
+        if let LiteralValue::Number(n) = eval_result.value {
+            if let JsNumber::Number(n) = n {
+                assert_eq!(2.0, n);
+                return;
+            }
+        }
+        unreachable!()
     }
 }

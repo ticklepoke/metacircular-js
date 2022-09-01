@@ -95,17 +95,18 @@ impl Environment {
                 Some(ref wrapped_rc) => Rc::clone(wrapped_rc),
             };
 
-            let borrowed_env = RefCell::borrow(&rc);
+            let mut borrowed_env = RefCell::borrow_mut(&rc);
             let maybe_parent = &borrowed_env.parent;
-            if let Some(Variable { kind, .. }) = self.values.get(&id) {
+            if let Some(Variable { kind, .. }) = borrowed_env.values.get(&id) {
                 if let DeclarationKind::Const = kind {
                     return Err(EnvironmentError::ReassignmentConst);
                 }
-                self.values.insert(
+				let k = kind.clone();
+                borrowed_env.values.insert(
                     id,
                     Variable {
                         value,
-                        kind: kind.to_owned(),
+                        kind: k,
                     },
                 );
                 return Ok(());

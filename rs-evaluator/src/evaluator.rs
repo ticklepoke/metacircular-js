@@ -18,6 +18,7 @@ type EvaluatorResult = Result<ast::literal::Literal, EvaluatorError>;
 
 type Env = Rc<RefCell<Environment>>;
 
+#[derive(Debug)]
 pub enum EvaluatorError {
     EnvironmentError(EnvironmentError),
 }
