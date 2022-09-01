@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use lib_ir::ast::{self, literal::Literal};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum DeclarationKind {
     Const,
     Let,
@@ -27,7 +27,7 @@ pub enum EnvironmentError {
     UndefinedVariable,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Variable {
     pub value: Literal,
     kind: DeclarationKind,

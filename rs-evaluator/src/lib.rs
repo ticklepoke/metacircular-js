@@ -43,4 +43,24 @@ mod tests {
         } 
 		unreachable!()
     }
+
+    #[test]
+    pub fn variables() {
+        let ast = r#"
+		{"type":"BlockStatement","start":0,"end":15,"body":[{"type":"VariableDeclaration","start":0,"end":12,"declarations":[{"type":"VariableDeclarator","start":6,"end":11,"id":{"type":"Identifier","start":6,"end":7,"name":"x"},"init":{"type":"Literal","start":10,"end":11,"value":1,"raw":"1"}}],"kind":"const"},{"type":"ExpressionStatement","start":13,"end":15,"expression":{"type":"Identifier","start":13,"end":14,"name":"x"}}],"sourceType":"script"}
+		"#;
+        let ast = lib_ir::serialize(ast.to_string()).expect("Unable to deserialize ast");
+
+        let eval_result = evaluator::begin_eval(ast).map_err(|e| JsError::new(&e.as_str()));
+
+        if let Ok(eval_result) = eval_result {
+            if let LiteralValue::Number(n) = eval_result.value {
+                if let JsNumber::Number(n) = n {
+                    assert_eq!(1.0, n);
+					return;
+                }
+            }
+        } 
+		unreachable!()
+    }
 }

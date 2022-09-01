@@ -126,7 +126,7 @@ pub enum NodeKind {
     ExportAllDeclaration(ExportAllDeclaration),
 }
 
-#[derive(Deserialize, Hash, PartialEq, Eq, Clone)]
+#[derive(Deserialize, Hash, PartialEq, Eq, Clone, Debug)]
 pub struct Identifier {
     pub name: String,
 }

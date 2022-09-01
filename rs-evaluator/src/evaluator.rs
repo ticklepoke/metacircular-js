@@ -81,7 +81,8 @@ pub fn eval_sequence(seq: Vec<Node>, env: Env) -> EvaluatorResult {
     } else {
         // HACK most elegant way to pop the first element
         let mut seq_q = std::collections::VecDeque::from(seq);
-        seq_q.pop_front();
+        let first = seq_q.pop_front().unwrap();
+        evaluate(first, Rc::clone(&env))?;
         let rest = Vec::from(seq_q);
         eval_sequence(rest, env)
     }
@@ -243,6 +244,7 @@ fn eval_logical_expression(expr: LogicalExpression, env: Env) -> EvaluatorResult
 
 fn eval_variable_declaration(expr: VariableDeclaration, env: Env) -> EvaluatorResult {
     let VariableDeclaration { declarations, kind } = expr;
+    println!("declaring");
     for d in declarations {
         eval_variable_declarator(d, kind.as_str(), Rc::clone(&env))?;
     }
