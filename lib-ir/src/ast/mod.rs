@@ -3,25 +3,25 @@
 use self::literal::Literal;
 use serde::Deserialize;
 
+pub mod coerced_eq;
 pub mod literal;
 pub mod literal_value;
 pub mod math;
-pub mod coerced_eq;
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Position {
     line: usize,
     column: usize,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct SourceLocation {
     source: Option<String>,
     start: Position,
     end: Position,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Node {
     loc: Option<SourceLocation>,
     #[serde(flatten)]
@@ -44,7 +44,7 @@ pub type ClassExpression = Class;
 pub type ImportDefaultSpecifier = ModuleSpecifier;
 pub type ImportNamespaceSpecifier = ModuleSpecifier;
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum NodeKind {
     // es5
@@ -131,126 +131,126 @@ pub struct Identifier {
     pub name: String,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Program {
     body: Vec<ProgramBody>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub enum ProgramBody {
     ModuleDeclaration(ModuleDeclaration),
     Statement(Statement),
 }
 
 // TODO: Change this into trait?
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Function {
     id: Option<Identifier>,
     params: Vec<Pattern>,
     // body: FunctionBody,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ExpressionStatement {
     pub expression: Expression,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Directive {
     expression: Literal,
     directive: String,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct BlockStatement {
     pub body: Vec<Node>,
 }
 
 // solitary semicolon
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct EmptyStatement {}
 
 // solitary semicolon
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct DebuggerStatement {}
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct WithStatement {
     object: Expression,
     body: Statement,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ReturnStatement {
     pub argument: Option<Expression>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct LabeledStatement {
     label: Identifier,
     body: Statement,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct BreakStatement {
     label: Option<Identifier>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ContinueStatement {
     label: Option<Identifier>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct IfStatement {
     test: Expression,
     consequent: Statement,
     alternate: Option<Statement>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct SwitchStatement {
     discriminant: Expression,
     cases: Vec<SwitchCase>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct SwitchCase {
     test: Option<Expression>,
     consequent: Vec<Statement>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ThrowStatement {
     argument: Expression,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct TryStatement {
     block: BlockStatement,
     handler: Option<CatchClause>,
     finalizer: Option<BlockStatement>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct CatchClause {
     param: Pattern,
     body: BlockStatement,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct WhileStatement {
     test: Expression,
     body: Statement,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct DoWhileStatement {
     body: Statement,
     test: Expression,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ForStatement {
     #[serde(flatten)]
     init: ForInitValue,
@@ -259,7 +259,7 @@ pub struct ForStatement {
     body: Statement,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum ForInitValue {
     VariableDeclaration(VariableDeclaration),
@@ -267,7 +267,7 @@ pub enum ForInitValue {
     Null,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ForInStatement {
     #[serde(flatten)]
     left: ForInLeftValue,
@@ -275,22 +275,22 @@ pub struct ForInStatement {
     body: Statement,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum ForInLeftValue {
     VariableDeclaration(VariableDeclaration),
     Pattern(Pattern),
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct FunctionDeclaration {
-    id: Identifier,
-    params: Vec<Pattern>,
-    body: FunctionBody,
-    generator: bool,
+    pub id: Identifier,
+    pub params: Vec<Pattern>,
+    pub body: FunctionBody,
+    pub generator: bool,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct FunctionExpression {
     id: Option<Identifier>,
     params: Vec<Pattern>,
@@ -298,7 +298,7 @@ pub struct FunctionExpression {
     generator: bool,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ArrowFunctionExpression {
     id: Option<Identifier>,
     params: Vec<Pattern>,
@@ -307,32 +307,32 @@ pub struct ArrowFunctionExpression {
     generator: bool, // false
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum ArrowFunctionBody {
     FunctionBody(FunctionBody),
     Expression(Expression),
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct VariableDeclaration {
     pub declarations: Vec<VariableDeclarator>,
     pub kind: String, // "var" | "let" | "const"
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct VariableDeclarator {
     pub id: Identifier,
     pub init: Option<Expression>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ArrayExpression {
     #[serde(flatten)]
     elements: Vec<ArrayElements>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum ArrayElements {
     Expression(Expression),
@@ -340,12 +340,12 @@ pub enum ArrayElements {
     Null,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ObjectExpression {
     properties: Vec<Property>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Property {
     key: PropertyKey,
     value: Expression,
@@ -355,21 +355,21 @@ pub struct Property {
     computed: bool,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum PropertyKey {
     Literal(Literal),
     Identifier(Identifier),
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct UnaryExpression {
     pub operator: UnaryOperator,
     prefix: bool, // Not in use, this is to distinguish from postfix operators (++, --)
     pub argument: Expression,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub enum UnaryOperator {
     #[serde(alias = "+")]
     Minus,
@@ -385,14 +385,14 @@ pub enum UnaryOperator {
     Delete,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct BinaryExpression {
     pub operator: BinaryOperator,
     pub left: Expression,
     pub right: Expression,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub enum BinaryOperator {
     #[serde(alias = "==")]
     EqEq,
@@ -438,14 +438,14 @@ pub enum BinaryOperator {
     Instanceof,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct AssignmentExpression {
     pub operator: AssignmentOperator,
     pub left: Pattern,
     pub right: Expression,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub enum AssignmentOperator {
     #[serde(alias = "=")]
     Eq,
@@ -473,21 +473,21 @@ pub enum AssignmentOperator {
     AndEq,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct AssignmentProperty {
     value: Pattern,
     kind: String, // "init"
     method: bool, // false
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct LogicalExpression {
     pub operator: LogicalOperator,
     pub left: Expression,
     pub right: Expression,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub enum LogicalOperator {
     #[serde(alias = "||")]
     Or,
@@ -495,27 +495,27 @@ pub enum LogicalOperator {
     And,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct MemberExpression {
     object: Expression,
     property: Expression,
     computed: bool,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ConditionalExpression {
     test: Expression,
     alternate: Expression,
     consequent: Expression,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct CallExpression {
     callee: MemberIdentifier,
     arguments: Vec<Expression>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum MemberIdentifier {
     MemberExpression(MemberExpression),
@@ -524,96 +524,96 @@ pub enum MemberIdentifier {
     Identifier(Identifier),
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct NewExpression {
     callee: Expression,
     #[serde(flatten)]
     arguments: Vec<NewExpressionArguments>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum NewExpressionArguments {
     Expression(Expression),
     SpreadElement(SpreadElement),
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct SequenceExpression {
     expressions: Vec<Node>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct SpreadElement {
     argument: Expression,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct YieldExpression {
     argument: Option<Expression>,
     delegate: bool,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct TemplateLiteral {
     quasis: Vec<TemplateElement>,
     expressions: Vec<Expression>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct TaggedTemplateExpression {
     tag: Expression,
     quasi: TemplateLiteral,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct TemplateElement {
     tail: bool,
     #[serde(flatten)]
     value: TemplateElementValue,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 pub struct TemplateElementValue {
     cooked: String,
     raw: String,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ObjectPattern {
     properties: Vec<AssignmentProperty>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ArrayPattern {
     elements: Vec<Option<Pattern>>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct RestElement {
     argument: Pattern,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct AssignmentPattern {
     left: Pattern,
     right: Expression,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Class {
     id: Option<Identifier>,
     super_class: Option<Expression>,
     body: ClassBody,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ClassBody {
     body: Vec<MethodDefinition>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct MethodDefinition {
     key: Expression,
     value: FunctionExpression,
@@ -622,32 +622,32 @@ pub struct MethodDefinition {
     r#static: bool,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ClassDeclaration {
     id: Identifier,
     super_class: Option<Expression>,
     body: ClassBody,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct MetaProperty {
     meta: Identifier,
     property: Identifier,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ModuleSpecifier {
     local: Identifier,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ImportDeclaration {
     #[serde(flatten)]
     specifiers: ImportDeclarationSpecifiers,
     source: Literal,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "type")]
 pub enum ImportDeclarationSpecifiers {
     ImportSpecifier(ImportSpecifier),
@@ -655,24 +655,24 @@ pub enum ImportDeclarationSpecifiers {
     ImportNamespaceSpecifier(ImportNamespaceSpecifier),
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ImportSpecifier {
     imported: Identifier,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ExportNamedDeclaration {
     declaration: Option<Declaration>,
     specifiers: Vec<ExportSpecifier>,
     source: Option<Literal>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ExportSpecifier {
     exported: Identifier,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(tag = "declaration")]
 pub enum ExportDefaultDeclaration {
     FunctionDeclaration(FunctionDeclaration),
@@ -680,7 +680,7 @@ pub enum ExportDefaultDeclaration {
     AnonymousDefaultExportedFunctionDeclaration,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ExportAllDeclaration {
     source: Literal,
 }

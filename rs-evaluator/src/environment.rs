@@ -1,6 +1,8 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use lib_ir::ast::{self, literal::Literal};
+use lib_ir::ast::{self, literal::Literal, literal_value::LiteralValue};
+
+use crate::closure::Closure;
 
 #[derive(Clone, Debug)]
 pub enum DeclarationKind {
@@ -28,13 +30,47 @@ pub enum EnvironmentError {
 }
 
 #[derive(Clone, Debug)]
+pub enum EvaluatorValue {
+    Literal(Literal),
+    Closure(Closure),
+}
+
+impl From<Literal> for EvaluatorValue {
+    fn from(l: Literal) -> Self {
+        EvaluatorValue::Literal(l)
+    }
+}
+
+impl From<LiteralValue> for EvaluatorValue {
+    fn from(value: LiteralValue) -> Self {
+        EvaluatorValue::from(Literal { value })
+    }
+}
+
+impl From<Closure> for EvaluatorValue {
+    fn from(c: Closure) -> Self {
+        EvaluatorValue::Closure(c)
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<bool> for EvaluatorValue {
+    fn into(self) -> bool {
+        match self {
+            EvaluatorValue::Literal(l) => l.value.into(),
+            EvaluatorValue::Closure(c) => c.into(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Variable {
-    pub value: Literal,
+    pub value: EvaluatorValue,
     kind: DeclarationKind,
 }
 
 // https://262.ecma-international.org/5.1/#sec-10.2.1
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Environment {
     parent: Option<Rc<RefCell<Environment>>>,
     values: HashMap<ast::Identifier, Variable>,
@@ -55,7 +91,7 @@ impl Environment {
     pub fn define(
         &mut self,
         id: ast::Identifier,
-        value: Literal,
+        value: EvaluatorValue,
         kind: &str,
     ) -> Result<(), EnvironmentError> {
         let k = DeclarationKind::from(kind);
@@ -67,7 +103,11 @@ impl Environment {
         Ok(())
     }
 
-    pub fn update(&mut self, id: ast::Identifier, value: Literal) -> Result<(), EnvironmentError> {
+    pub fn update(
+        &mut self,
+        id: ast::Identifier,
+        value: EvaluatorValue,
+    ) -> Result<(), EnvironmentError> {
         if let Some(Variable { kind, .. }) = self.values.get(&id) {
             if let DeclarationKind::Const = kind {
                 return Err(EnvironmentError::ReassignmentConst);
@@ -101,14 +141,8 @@ impl Environment {
                 if let DeclarationKind::Const = kind {
                     return Err(EnvironmentError::ReassignmentConst);
                 }
-				let k = kind.clone();
-                borrowed_env.values.insert(
-                    id,
-                    Variable {
-                        value,
-                        kind: k,
-                    },
-                );
+                let k = kind.clone();
+                borrowed_env.values.insert(id, Variable { value, kind: k });
                 return Ok(());
             } else {
                 match maybe_parent {

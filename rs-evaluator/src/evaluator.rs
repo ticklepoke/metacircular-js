@@ -6,17 +6,18 @@ use lib_ir::ast::literal::{JsNumber, Literal};
 use lib_ir::ast::literal_value::LiteralValue;
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
 use lib_ir::ast::{
-    self, AssignmentExpression, AssignmentOperator, BinaryExpression, Identifier,
-    LogicalExpression, Node, UnaryExpression, VariableDeclaration, VariableDeclarator,
+    self, AssignmentExpression, AssignmentOperator, BinaryExpression, FunctionDeclaration,
+    Identifier, LogicalExpression, Node, UnaryExpression, VariableDeclaration, VariableDeclarator,
 };
 use lib_ir::ast::{BlockStatement, NodeKind};
 
-use crate::constants::{JS_FALSE, JS_NAN, JS_TRUE};
-use crate::environment::{Environment, EnvironmentError};
+use crate::closure::Closure;
+use crate::constants::{JS_FALSE, JS_NAN, JS_NULL, JS_TRUE, JS_UNDEFINED};
+use crate::environment::{Environment, EnvironmentError, EvaluatorValue};
 
-type EvaluatorResult = Result<ast::literal::Literal, EvaluatorError>;
+type EvaluatorResult = Result<EvaluatorValue, EvaluatorError>;
 
-type Env = Rc<RefCell<Environment>>;
+pub type Env = Rc<RefCell<Environment>>;
 
 #[derive(Debug)]
 pub enum EvaluatorError {
@@ -45,10 +46,11 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::UnaryExpression(expr) => eval_unary_expression(expr, env),
         NodeKind::BinaryExpression(expr) => eval_binary_expression(expr, env),
         NodeKind::LogicalExpression(expr) => eval_logical_expression(expr, env),
-        NodeKind::Literal(literal) => Ok(literal),
+        NodeKind::Literal(literal) => Ok(EvaluatorValue::from(literal)),
         NodeKind::VariableDeclaration(decl) => eval_variable_declaration(decl, env),
         NodeKind::Identifier(id) => eval_identifier(id, env),
         NodeKind::AssignmentExpression(expr) => eval_assignment_expr(expr, env),
+        NodeKind::FunctionDeclaration(f) => eval_function_declaration(f, env),
         _ => unimplemented!(),
     }
 }
@@ -63,9 +65,7 @@ pub fn eval_block_statement(block: BlockStatement, env: Env) -> EvaluatorResult 
 pub fn eval_sequence(seq: Vec<Node>, env: Env) -> EvaluatorResult {
     if seq.is_empty() {
         // Empty block in js should return undefined
-        return Ok(Literal {
-            value: ast::literal_value::LiteralValue::Undefined,
-        });
+        return Ok(EvaluatorValue::from(JS_UNDEFINED));
     }
     // TODO: this might be an expensive clone
     let first_seq = seq.first().unwrap().to_owned();
@@ -74,9 +74,7 @@ pub fn eval_sequence(seq: Vec<Node>, env: Env) -> EvaluatorResult {
     }
     if let NodeKind::ReturnStatement(return_statement) = first_seq.kind {
         match return_statement.argument {
-            None => Ok(Literal {
-                value: ast::literal_value::LiteralValue::Undefined,
-            }),
+            None => Ok(EvaluatorValue::from(JS_UNDEFINED)),
             Some(argument) => evaluate(*argument, env),
         }
     } else {
@@ -97,7 +95,10 @@ pub fn eval_unary_expression(node: UnaryExpression, env: Env) -> EvaluatorResult
 
     let arg_value = evaluate(*argument, env)?;
 
-    let Literal { value } = arg_value;
+    let Literal { value } = match arg_value {
+        EvaluatorValue::Literal(l) => l,
+        EvaluatorValue::Closure(_) => unimplemented!(),
+    };
 
     let evaluated_val = match value {
         LiteralValue::String(s) => match operator {
@@ -162,9 +163,7 @@ pub fn eval_unary_expression(node: UnaryExpression, env: Env) -> EvaluatorResult
         },
     };
 
-    Ok(Literal {
-        value: evaluated_val,
-    })
+    Ok(EvaluatorValue::from(evaluated_val))
 }
 
 fn eval_binary_expression(expr: BinaryExpression, env: Env) -> EvaluatorResult {
@@ -174,8 +173,18 @@ fn eval_binary_expression(expr: BinaryExpression, env: Env) -> EvaluatorResult {
         operator,
     } = expr;
 
-    let Literal { value: left_value } = evaluate(*left, Rc::clone(&env))?;
-    let Literal { value: right_value } = evaluate(*right, Rc::clone(&env))?;
+    let left_evaluator_value = evaluate(*left, Rc::clone(&env))?;
+    let right_evaluator_value = evaluate(*right, Rc::clone(&env))?;
+
+    let left_value = match left_evaluator_value {
+        EvaluatorValue::Literal(l) => l.value,
+        EvaluatorValue::Closure(c) => LiteralValue::String(c.to_string()),
+    };
+
+    let right_value = match right_evaluator_value {
+        EvaluatorValue::Literal(l) => l.value,
+        EvaluatorValue::Closure(c) => LiteralValue::String(c.to_string()),
+    };
 
     let evaluated_val = match operator {
         // https://262.ecma-international.org/5.1/#sec-11.9.3
@@ -202,9 +211,7 @@ fn eval_binary_expression(expr: BinaryExpression, env: Env) -> EvaluatorResult {
         ast::BinaryOperator::Instanceof => todo!("requires primitive type info"),
     };
 
-    Ok(Literal {
-        value: evaluated_val,
-    })
+    Ok(EvaluatorValue::from(evaluated_val))
 }
 
 // Account for short circuiting behaviour
@@ -216,31 +223,27 @@ fn eval_logical_expression(expr: LogicalExpression, env: Env) -> EvaluatorResult
         right,
     } = expr;
 
-    let Literal { value: left_value } = evaluate(*left, Rc::clone(&env))?;
+    let left_value = evaluate(*left, Rc::clone(&env))?;
 
     let left_bool: bool = left_value.into();
 
     let evaluated_value = match operator {
         ast::LogicalOperator::And => {
             if left_bool {
-                let Literal { value: right_value } = evaluate(*right, Rc::clone(&env))?;
-                right_value
+                evaluate(*right, Rc::clone(&env))?
             } else {
-                JS_FALSE
+                EvaluatorValue::from(JS_FALSE)
             }
         }
         ast::LogicalOperator::Or => {
             if left_bool {
-                JS_TRUE
+                EvaluatorValue::from(JS_TRUE)
             } else {
-                let Literal { value: right_value } = evaluate(*right, Rc::clone(&env))?;
-                right_value
+                evaluate(*right, Rc::clone(&env))?
             }
         }
     };
-    Ok(Literal {
-        value: evaluated_value,
-    })
+    Ok(evaluated_value)
 }
 
 fn eval_variable_declaration(expr: VariableDeclaration, env: Env) -> EvaluatorResult {
@@ -249,9 +252,7 @@ fn eval_variable_declaration(expr: VariableDeclaration, env: Env) -> EvaluatorRe
     for d in declarations {
         eval_variable_declarator(d, kind.as_str(), Rc::clone(&env))?;
     }
-    Ok(Literal {
-        value: LiteralValue::Null,
-    })
+    Ok(EvaluatorValue::from(JS_NULL))
 }
 
 fn eval_variable_declarator(expr: VariableDeclarator, kind: &str, env: Env) -> EvaluatorResult {
@@ -260,28 +261,22 @@ fn eval_variable_declarator(expr: VariableDeclarator, kind: &str, env: Env) -> E
     let value = if let Some(init) = init {
         evaluate(*init, Rc::clone(&env))?
     } else {
-        Literal {
-            value: LiteralValue::Undefined,
-        }
+        EvaluatorValue::from(JS_UNDEFINED)
     };
 
     env.borrow_mut()
         .define(id, value, kind)
         .map_err(EvaluatorError::EnvironmentError)?;
 
-    Ok(Literal {
-        value: LiteralValue::Null,
-    })
+    Ok(EvaluatorValue::from(JS_NULL))
 }
 
 fn eval_identifier(id: Identifier, env: Env) -> EvaluatorResult {
-    let literal = env.borrow().lookup(&id).map_or(
-        Literal {
-            value: LiteralValue::Undefined,
-        },
-        |v| v.value,
-    );
-    Ok(literal)
+    let evaluator_value = env
+        .borrow()
+        .lookup(&id)
+        .map_or(EvaluatorValue::from(JS_UNDEFINED), |v| v.value);
+    Ok(evaluator_value)
 }
 
 fn eval_assignment_expr(expr: AssignmentExpression, env: Env) -> EvaluatorResult {
@@ -308,7 +303,18 @@ fn eval_assignment_expr(expr: AssignmentExpression, env: Env) -> EvaluatorResult
     } else {
         unreachable!()
     }
-    Ok(Literal {
-        value: LiteralValue::Undefined,
-    })
+    Ok(EvaluatorValue::from(JS_UNDEFINED))
+}
+
+// TODO: how to hoist functions?
+fn eval_function_declaration(f: FunctionDeclaration, env: Env) -> EvaluatorResult {
+    let FunctionDeclaration {
+        id, params, body, ..
+    } = f;
+    let closure = Closure::new(params, body, Rc::clone(&env));
+    // Currently does not hoist
+    env.borrow_mut()
+        .define(id, EvaluatorValue::from(closure), "let")
+        .map_err(EvaluatorError::EnvironmentError)?;
+    Ok(EvaluatorValue::from(JS_UNDEFINED))
 }

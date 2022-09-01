@@ -2,6 +2,7 @@ use js_value::map_rust_value;
 
 use wasm_bindgen::prelude::*;
 
+mod closure;
 mod constants;
 mod environment;
 mod evaluator;
@@ -20,7 +21,7 @@ pub fn evaluate(ast: String) -> Result<JsValue, JsError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::evaluator;
+    use crate::{environment::EvaluatorValue, evaluator};
     use lib_ir::ast::{literal::JsNumber, literal_value::LiteralValue};
     use wasm_bindgen::prelude::*;
 
@@ -34,10 +35,12 @@ mod tests {
         let eval_result = evaluator::begin_eval(ast).map_err(|e| JsError::new(&e.as_str()));
 
         if let Ok(eval_result) = eval_result {
-            if let LiteralValue::Number(n) = eval_result.value {
-                if let JsNumber::Number(n) = n {
-                    assert_eq!(2.0, n);
-                    return;
+            if let EvaluatorValue::Literal(eval_result) = eval_result {
+                if let LiteralValue::Number(n) = eval_result.value {
+                    if let JsNumber::Number(n) = n {
+                        assert_eq!(2.0, n);
+                        return;
+                    }
                 }
             }
         }
@@ -54,10 +57,12 @@ mod tests {
         let eval_result = evaluator::begin_eval(ast).map_err(|e| JsError::new(&e.as_str()));
 
         if let Ok(eval_result) = eval_result {
-            if let LiteralValue::Number(n) = eval_result.value {
-                if let JsNumber::Number(n) = n {
-                    assert_eq!(1.0, n);
-                    return;
+            if let EvaluatorValue::Literal(eval_result) = eval_result {
+                if let LiteralValue::Number(n) = eval_result.value {
+                    if let JsNumber::Number(n) = n {
+                        assert_eq!(1.0, n);
+                        return;
+                    }
                 }
             }
         }
@@ -73,10 +78,12 @@ mod tests {
 
         let eval_result = evaluator::begin_eval(ast).expect("Unable to eval");
 
-        if let LiteralValue::Number(n) = eval_result.value {
-            if let JsNumber::Number(n) = n {
-                assert_eq!(2.0, n);
-                return;
+        if let EvaluatorValue::Literal(eval_result) = eval_result {
+            if let LiteralValue::Number(n) = eval_result.value {
+                if let JsNumber::Number(n) = n {
+                    assert_eq!(2.0, n);
+                    return;
+                }
             }
         }
         unreachable!()
