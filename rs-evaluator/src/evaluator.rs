@@ -1,12 +1,13 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use lib_ir::ast::arrow_function::ArrowFunctionExpression;
 use lib_ir::ast::coerced_eq::CoercedEq;
 use lib_ir::ast::literal::{JsNumber, Literal};
 use lib_ir::ast::literal_value::LiteralValue;
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
 use lib_ir::ast::{
-    self, ArrowFunctionExpression, AssignmentExpression, AssignmentOperator, BinaryExpression,
+    self, AssignmentExpression, AssignmentOperator, BinaryExpression, CallExpression,
     FunctionDeclaration, FunctionExpression, Identifier, LogicalExpression, Node, ReturnStatement,
     UnaryExpression, VariableDeclaration, VariableDeclarator,
 };
@@ -54,6 +55,8 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::FunctionDeclaration(f) => eval_function_declaration(f, env),
         NodeKind::FunctionExpression(f) => eval_function_expression(f, env),
         NodeKind::ArrowFunctionExpression(f) => eval_arrow_function(f, env),
+        NodeKind::CallExpression(c) => eval_call_expr(c, env),
+        NodeKind::ReturnStatement(r) => eval_return_statement(r, env),
         _ => unimplemented!(),
     }
 }
@@ -76,10 +79,7 @@ pub fn eval_sequence(seq: Vec<Node>, env: Env) -> EvaluatorResult {
         return evaluate(first_seq, env);
     }
     if let NodeKind::ReturnStatement(return_statement) = first_seq.kind {
-        match return_statement.argument {
-            None => Ok(EvaluatorValue::from(JS_UNDEFINED)),
-            Some(argument) => evaluate(*argument, env),
-        }
+        eval_return_statement(return_statement, env)
     } else {
         // HACK most elegant way to pop the first element
         let mut seq_q = std::collections::VecDeque::from(seq);
@@ -333,15 +333,76 @@ fn eval_function_expression(f: FunctionExpression, env: Env) -> EvaluatorResult 
 
 fn eval_arrow_function(f: ArrowFunctionExpression, env: Env) -> EvaluatorResult {
     let ArrowFunctionExpression { params, body, .. } = f;
-    let normalized_body = match body {
-        ast::ArrowFunctionBody::FunctionBody(b) => b,
-        ast::ArrowFunctionBody::Expression(e) => BlockStatement {
+
+    let normalized_body = match body.kind {
+        NodeKind::BlockStatement(b) => b,
+        _ => BlockStatement {
             body: vec![Node {
                 loc: None,
-                kind: NodeKind::ReturnStatement(ReturnStatement { argument: Some(e) }),
+                kind: NodeKind::ReturnStatement(ReturnStatement {
+                    argument: Some(body),
+                }),
             }],
         },
     };
     let closure = Closure::new(params, normalized_body, None, Rc::clone(&env));
     Ok(EvaluatorValue::from(closure))
+}
+
+// If we call the function with fewer than required args, the rest should default to undefined
+// If we call the function with more than the required args, the rest should be ignored
+fn eval_call_expr(c: CallExpression, env: Env) -> EvaluatorResult {
+    let CallExpression { callee, arguments } = c;
+    let closure = match callee {
+        ast::MemberIdentifier::Identifier(id) => {
+            if let EvaluatorValue::Closure(c) = eval_identifier(id, Rc::clone(&env))? {
+                c
+            } else {
+                unreachable!("Trying to call a non function")
+            }
+        }
+        ast::MemberIdentifier::MemberExpression(_) => todo!(),
+        ast::MemberIdentifier::Expression(_) => todo!(),
+        ast::MemberIdentifier::Super(_) => todo!(),
+    };
+
+    // eval arguments
+    let mut arg_values: Vec<EvaluatorValue> = arguments
+        .into_iter()
+        .take(closure.parameters.len())
+        .map(|arg| evaluate(*arg, Rc::clone(&env)).expect("Unable to evaluate argument"))
+        .collect();
+
+    for _ in arg_values.len()..closure.parameters.len() {
+        arg_values.push(EvaluatorValue::from(JS_UNDEFINED));
+    }
+
+    // extend env with arg values
+    let new_env = env.borrow_mut().extend(Rc::clone(&env));
+    // set arg values
+    closure
+        .parameters
+        .into_iter()
+        .zip(arg_values.into_iter())
+        .try_for_each(|(id, value)| {
+            if let NodeKind::Identifier(id) = id.kind {
+                new_env
+                    .borrow_mut()
+                    .define(id, value, "let")
+                    .map_err(EvaluatorError::EnvironmentError)?;
+                Ok(())
+            } else {
+                unreachable!()
+            }
+        })?;
+
+    // eval closure body with new env
+    eval_block_statement(closure.body, new_env)
+}
+
+fn eval_return_statement(r: ReturnStatement, env: Env) -> EvaluatorResult {
+    match r.argument {
+        None => Ok(EvaluatorValue::from(JS_UNDEFINED)),
+        Some(argument) => evaluate(*argument, env),
+    }
 }

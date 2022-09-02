@@ -1,8 +1,9 @@
 #![allow(dead_code)]
 
-use self::literal::Literal;
+use self::{arrow_function::ArrowFunctionExpression, literal::Literal};
 use serde::Deserialize;
 
+pub mod arrow_function;
 pub mod coerced_eq;
 pub mod literal;
 pub mod literal_value;
@@ -299,22 +300,6 @@ pub struct FunctionExpression {
 }
 
 #[derive(Deserialize, Clone, Debug)]
-pub struct ArrowFunctionExpression {
-    pub id: Option<Identifier>, // always none, but estree spec leaves this null field present
-    pub params: Vec<Pattern>,
-    #[serde(flatten)]
-    pub body: ArrowFunctionBody,
-    generator: bool, // false
-}
-
-#[derive(Deserialize, Clone, Debug)]
-#[serde(tag = "type")]
-pub enum ArrowFunctionBody {
-    FunctionBody(FunctionBody),
-    Expression(Expression),
-}
-
-#[derive(Deserialize, Clone, Debug)]
 pub struct VariableDeclaration {
     pub declarations: Vec<VariableDeclarator>,
     pub kind: String, // "var" | "let" | "const"
@@ -511,8 +496,8 @@ pub struct ConditionalExpression {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct CallExpression {
-    callee: MemberIdentifier,
-    arguments: Vec<Expression>,
+    pub callee: MemberIdentifier,
+    pub arguments: Vec<Expression>,
 }
 
 #[derive(Deserialize, Clone, Debug)]

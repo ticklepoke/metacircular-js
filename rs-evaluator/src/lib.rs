@@ -21,7 +21,7 @@ pub fn evaluate(ast: String) -> Result<JsValue, JsError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{environment::EvaluatorValue, evaluator};
+    use crate::{constants::JS_UNDEFINED, environment::EvaluatorValue, evaluator};
     use lib_ir::ast::{literal::JsNumber, literal_value::LiteralValue};
     use wasm_bindgen::prelude::*;
 
@@ -87,5 +87,39 @@ mod tests {
             }
         }
         unreachable!()
+    }
+
+    #[test]
+    pub fn function_call() {
+        let ast = r#"
+		{"type":"BlockStatement","start":0,"end":37,"body":[{"type":"FunctionDeclaration","start":0,"end":29,"id":{"type":"Identifier","start":9,"end":12,"name":"foo"},"expression":false,"generator":false,"async":false,"params":[],"body":{"type":"BlockStatement","start":15,"end":29,"body":[{"type":"ReturnStatement","start":18,"end":27,"argument":{"type":"Literal","start":25,"end":26,"value":1,"raw":"1"}}]}},{"type":"ExpressionStatement","start":31,"end":37,"expression":{"type":"CallExpression","start":31,"end":36,"callee":{"type":"Identifier","start":31,"end":34,"name":"foo"},"arguments":[],"optional":false}}],"sourceType":"script"}
+		"#;
+        let ast = lib_ir::serialize(ast.to_string()).expect("Unable to deserialize ast");
+
+        let eval_result = evaluator::begin_eval(ast).expect("Unable to eval");
+
+        if let EvaluatorValue::Literal(eval_result) = eval_result {
+            if let LiteralValue::Number(n) = eval_result.value {
+                if let JsNumber::Number(n) = n {
+                    assert_eq!(1.0, n);
+                    return;
+                }
+            }
+        }
+        unreachable!()
+    }
+
+    #[test]
+    pub fn arrow_fn() {
+        let ast = r#"
+		{"type":"BlockStatement","start":0,"end":109,"body":[{"type":"ExpressionStatement","start":100,"end":108,"expression":{"type":"ArrowFunctionExpression","start":100,"end":107,"id":null,"expression":true,"generator":false,"async":false,"params":[],"body":{"type":"Literal","start":106,"end":107,"value":1,"raw":"1"}}}],"sourceType":"script"}
+		"#;
+        let ast = lib_ir::serialize(ast.to_string()).expect("Unable to deserialize ast");
+
+        let eval_result = evaluator::begin_eval(ast).expect("Unable to eval");
+
+        if let EvaluatorValue::Literal(eval_result) = eval_result {
+            assert_eq!(eval_result.value, JS_UNDEFINED);
+        }
     }
 }
