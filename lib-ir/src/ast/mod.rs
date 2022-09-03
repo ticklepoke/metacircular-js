@@ -327,24 +327,17 @@ pub enum ArrayElements {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct ObjectExpression {
-    properties: Vec<Property>,
+    pub properties: Vec<Property>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Property {
-    key: PropertyKey,
-    value: Expression,
+    pub key: Expression,
+    pub value: Expression,
     kind: String, // "init" | "get" | "set"
     method: bool,
     shorthand: bool,
     computed: bool,
-}
-
-#[derive(Deserialize, Clone, Debug)]
-#[serde(tag = "type")]
-pub enum PropertyKey {
-    Literal(Literal),
-    Identifier(Identifier),
 }
 
 #[derive(Deserialize, Clone, Debug)]

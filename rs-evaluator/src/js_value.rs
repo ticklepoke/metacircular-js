@@ -1,7 +1,7 @@
 use lib_ir::ast::{literal::JsNumber, literal_value::LiteralValue};
 use wasm_bindgen::prelude::*;
 
-use crate::environment::EvaluatorValue;
+use crate::evaluator_value::EvaluatorValue;
 
 // TODO: we can evaluate more than just literals, objects would be returned
 // as their stringified representation
@@ -22,5 +22,6 @@ pub fn map_rust_value(eval_result: EvaluatorValue) -> JsValue {
             LiteralValue::RegExp => unreachable!(),
             LiteralValue::Undefined => JsValue::UNDEFINED,
         },
+        EvaluatorValue::Object(_) => JsValue::from_str(eval_result.to_string().as_str()),
     }
 }

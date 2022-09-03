@@ -1,8 +1,8 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use lib_ir::ast::{self, literal::Literal, literal_value::LiteralValue};
+use lib_ir::ast;
 
-use crate::closure::Closure;
+use crate::evaluator_value::EvaluatorValue;
 
 #[derive(Clone, Debug)]
 pub enum DeclarationKind {
@@ -27,40 +27,6 @@ pub enum EnvironmentError {
     DuplicateDeclaration,
     ReassignmentConst,
     UndefinedVariable,
-}
-
-#[derive(Clone, Debug)]
-pub enum EvaluatorValue {
-    Literal(Literal),
-    Closure(Closure),
-}
-
-impl From<Literal> for EvaluatorValue {
-    fn from(l: Literal) -> Self {
-        EvaluatorValue::Literal(l)
-    }
-}
-
-impl From<LiteralValue> for EvaluatorValue {
-    fn from(value: LiteralValue) -> Self {
-        EvaluatorValue::from(Literal { value })
-    }
-}
-
-impl From<Closure> for EvaluatorValue {
-    fn from(c: Closure) -> Self {
-        EvaluatorValue::Closure(c)
-    }
-}
-
-#[allow(clippy::from_over_into)]
-impl Into<bool> for EvaluatorValue {
-    fn into(self) -> bool {
-        match self {
-            EvaluatorValue::Literal(l) => l.value.into(),
-            EvaluatorValue::Closure(c) => c.into(),
-        }
-    }
 }
 
 #[derive(Clone, Debug)]

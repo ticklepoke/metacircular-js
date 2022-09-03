@@ -6,6 +6,7 @@ mod closure;
 mod constants;
 mod environment;
 mod evaluator;
+mod evaluator_value;
 mod js_value;
 
 #[allow(unused_variables)]
@@ -21,7 +22,7 @@ pub fn evaluate(ast: String) -> Result<JsValue, JsError> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{constants::JS_UNDEFINED, environment::EvaluatorValue, evaluator};
+    use crate::{constants::JS_UNDEFINED, evaluator, evaluator_value::EvaluatorValue};
     use lib_ir::ast::{literal::JsNumber, literal_value::LiteralValue};
     use wasm_bindgen::prelude::*;
 

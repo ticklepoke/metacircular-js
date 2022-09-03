@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 use lib_ir::ast::arrow_function::ArrowFunctionExpression;
@@ -8,14 +9,15 @@ use lib_ir::ast::literal_value::LiteralValue;
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
 use lib_ir::ast::{
     self, AssignmentExpression, AssignmentOperator, BinaryExpression, CallExpression,
-    FunctionDeclaration, FunctionExpression, Identifier, LogicalExpression, Node, ReturnStatement,
-    UnaryExpression, VariableDeclaration, VariableDeclarator,
+    FunctionDeclaration, FunctionExpression, Identifier, LogicalExpression, Node, ObjectExpression,
+    Property, ReturnStatement, UnaryExpression, VariableDeclaration, VariableDeclarator,
 };
 use lib_ir::ast::{BlockStatement, NodeKind};
 
 use crate::closure::Closure;
 use crate::constants::{JS_FALSE, JS_NAN, JS_NULL, JS_TRUE, JS_UNDEFINED};
-use crate::environment::{Environment, EnvironmentError, EvaluatorValue};
+use crate::environment::{Environment, EnvironmentError};
+use crate::evaluator_value::EvaluatorValue;
 
 type EvaluatorResult = Result<EvaluatorValue, EvaluatorError>;
 
@@ -57,6 +59,7 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::ArrowFunctionExpression(f) => eval_arrow_function(f, env),
         NodeKind::CallExpression(c) => eval_call_expr(c, env),
         NodeKind::ReturnStatement(r) => eval_return_statement(r, env),
+        NodeKind::ObjectExpression(e) => eval_object_expression(e, env),
         _ => unimplemented!(),
     }
 }
@@ -101,6 +104,7 @@ pub fn eval_unary_expression(node: UnaryExpression, env: Env) -> EvaluatorResult
     let Literal { value } = match arg_value {
         EvaluatorValue::Literal(l) => l,
         EvaluatorValue::Closure(_) => unimplemented!(),
+        EvaluatorValue::Object(_) => todo!(),
     };
 
     let evaluated_val = match value {
@@ -182,11 +186,13 @@ fn eval_binary_expression(expr: BinaryExpression, env: Env) -> EvaluatorResult {
     let left_value = match left_evaluator_value {
         EvaluatorValue::Literal(l) => l.value,
         EvaluatorValue::Closure(c) => LiteralValue::String(c.to_string()),
+        EvaluatorValue::Object(_) => todo!(),
     };
 
     let right_value = match right_evaluator_value {
         EvaluatorValue::Literal(l) => l.value,
         EvaluatorValue::Closure(c) => LiteralValue::String(c.to_string()),
+        EvaluatorValue::Object(_) => todo!(),
     };
 
     let evaluated_val = match operator {
@@ -405,4 +411,25 @@ fn eval_return_statement(r: ReturnStatement, env: Env) -> EvaluatorResult {
         None => Ok(EvaluatorValue::from(JS_UNDEFINED)),
         Some(argument) => evaluate(*argument, env),
     }
+}
+
+fn eval_object_expression(e: ObjectExpression, env: Env) -> EvaluatorResult {
+    let ObjectExpression { properties } = e;
+    let mut object_frame = HashMap::new();
+
+    properties.into_iter().try_for_each(|p| {
+        let Property { key, value, .. } = p;
+
+        let evaluated_value = evaluate(*value, Rc::clone(&env))?;
+
+        let key_string = match key.kind {
+            NodeKind::Identifier(id) => id.name,
+            NodeKind::Literal(l) => l.value.into(),
+            _ => evaluate(*key, Rc::clone(&env))?.into(),
+        };
+        object_frame.insert(key_string, evaluated_value);
+        Ok(())
+    })?;
+	
+    Ok(EvaluatorValue::Object(object_frame))
 }
