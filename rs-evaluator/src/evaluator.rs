@@ -9,8 +9,9 @@ use lib_ir::ast::literal_value::LiteralValue;
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
 use lib_ir::ast::{
     self, AssignmentExpression, AssignmentOperator, BinaryExpression, CallExpression,
-    FunctionDeclaration, FunctionExpression, Identifier, LogicalExpression, Node, ObjectExpression,
-    Property, ReturnStatement, UnaryExpression, VariableDeclaration, VariableDeclarator,
+    FunctionDeclaration, FunctionExpression, Identifier, LogicalExpression, MemberExpression, Node,
+    ObjectExpression, Property, ReturnStatement, UnaryExpression, VariableDeclaration,
+    VariableDeclarator,
 };
 use lib_ir::ast::{BlockStatement, NodeKind};
 
@@ -26,12 +27,14 @@ pub type Env = Rc<RefCell<Environment>>;
 #[derive(Debug)]
 pub enum EvaluatorError {
     EnvironmentError(EnvironmentError),
+    InvalidType(String),
 }
 
 impl EvaluatorError {
     pub fn as_str(&self) -> String {
         match self {
             EvaluatorError::EnvironmentError(e) => format!("{:?}", e),
+            EvaluatorError::InvalidType(s) => s.to_owned(),
         }
     }
 }
@@ -60,7 +63,8 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::CallExpression(c) => eval_call_expr(c, env),
         NodeKind::ReturnStatement(r) => eval_return_statement(r, env),
         NodeKind::ObjectExpression(e) => eval_object_expression(e, env),
-        _ => unimplemented!(),
+        NodeKind::MemberExpression(e) => eval_member_expression(e, env),
+        _ => unimplemented!("{:?}", tree.kind),
     }
 }
 
@@ -225,13 +229,14 @@ fn eval_binary_expression(expr: BinaryExpression, env: Env) -> EvaluatorResult {
 
 // Account for short circuiting behaviour
 // https://262.ecma-international.org/5.1/#sec-11.11
-fn eval_logical_expression(expr: LogicalExpression, env: Env) -> EvaluatorResult {
-    let LogicalExpression {
+fn eval_logical_expression(
+    LogicalExpression {
         operator,
         left,
         right,
-    } = expr;
-
+    }: LogicalExpression,
+    env: Env,
+) -> EvaluatorResult {
     let left_value = evaluate(*left, Rc::clone(&env))?;
 
     let left_bool: bool = left_value.into();
@@ -255,18 +260,21 @@ fn eval_logical_expression(expr: LogicalExpression, env: Env) -> EvaluatorResult
     Ok(evaluated_value)
 }
 
-fn eval_variable_declaration(expr: VariableDeclaration, env: Env) -> EvaluatorResult {
-    let VariableDeclaration { declarations, kind } = expr;
-    println!("declaring");
+fn eval_variable_declaration(
+    VariableDeclaration { declarations, kind }: VariableDeclaration,
+    env: Env,
+) -> EvaluatorResult {
     for d in declarations {
         eval_variable_declarator(d, kind.as_str(), Rc::clone(&env))?;
     }
     Ok(EvaluatorValue::from(JS_NULL))
 }
 
-fn eval_variable_declarator(expr: VariableDeclarator, kind: &str, env: Env) -> EvaluatorResult {
-    let VariableDeclarator { id, init } = expr;
-
+fn eval_variable_declarator(
+    VariableDeclarator { id, init }: VariableDeclarator,
+    kind: &str,
+    env: Env,
+) -> EvaluatorResult {
     let value = if let Some(init) = init {
         evaluate(*init, Rc::clone(&env))?
     } else {
@@ -288,13 +296,14 @@ fn eval_identifier(id: Identifier, env: Env) -> EvaluatorResult {
     Ok(evaluator_value)
 }
 
-fn eval_assignment_expr(expr: AssignmentExpression, env: Env) -> EvaluatorResult {
-    let AssignmentExpression {
+fn eval_assignment_expr(
+    AssignmentExpression {
         left,
         right,
         operator,
-    } = expr;
-
+    }: AssignmentExpression,
+    env: Env,
+) -> EvaluatorResult {
     let right_copy = right.clone();
     let right_value = evaluate(*right, Rc::clone(&env))?;
 
@@ -316,10 +325,12 @@ fn eval_assignment_expr(expr: AssignmentExpression, env: Env) -> EvaluatorResult
 }
 
 // TODO: how to hoist functions?
-fn eval_function_declaration(f: FunctionDeclaration, env: Env) -> EvaluatorResult {
-    let FunctionDeclaration {
+fn eval_function_declaration(
+    FunctionDeclaration {
         id, params, body, ..
-    } = f;
+    }: FunctionDeclaration,
+    env: Env,
+) -> EvaluatorResult {
     let closure = Closure::new(params, body, Some(id.name.to_owned()), Rc::clone(&env));
     // Currently does not hoist
     env.borrow_mut()
@@ -329,17 +340,20 @@ fn eval_function_declaration(f: FunctionDeclaration, env: Env) -> EvaluatorResul
 }
 
 // TODO: no lexical this binding present yet
-fn eval_function_expression(f: FunctionExpression, env: Env) -> EvaluatorResult {
-    let FunctionExpression {
+fn eval_function_expression(
+    FunctionExpression {
         id, params, body, ..
-    } = f;
+    }: FunctionExpression,
+    env: Env,
+) -> EvaluatorResult {
     let closure = Closure::new(params, body, id.map(|id| id.name), Rc::clone(&env));
     Ok(EvaluatorValue::from(closure))
 }
 
-fn eval_arrow_function(f: ArrowFunctionExpression, env: Env) -> EvaluatorResult {
-    let ArrowFunctionExpression { params, body, .. } = f;
-
+fn eval_arrow_function(
+    ArrowFunctionExpression { params, body, .. }: ArrowFunctionExpression,
+    env: Env,
+) -> EvaluatorResult {
     let normalized_body = match body.kind {
         NodeKind::BlockStatement(b) => b,
         _ => BlockStatement {
@@ -357,8 +371,10 @@ fn eval_arrow_function(f: ArrowFunctionExpression, env: Env) -> EvaluatorResult 
 
 // If we call the function with fewer than required args, the rest should default to undefined
 // If we call the function with more than the required args, the rest should be ignored
-fn eval_call_expr(c: CallExpression, env: Env) -> EvaluatorResult {
-    let CallExpression { callee, arguments } = c;
+fn eval_call_expr(
+    CallExpression { callee, arguments }: CallExpression,
+    env: Env,
+) -> EvaluatorResult {
     let closure = match callee {
         ast::MemberIdentifier::Identifier(id) => {
             if let EvaluatorValue::Closure(c) = eval_identifier(id, Rc::clone(&env))? {
@@ -367,7 +383,15 @@ fn eval_call_expr(c: CallExpression, env: Env) -> EvaluatorResult {
                 unreachable!("Trying to call a non function")
             }
         }
-        ast::MemberIdentifier::MemberExpression(_) => todo!(),
+        ast::MemberIdentifier::MemberExpression(e) => {
+            if let EvaluatorValue::Closure(c) = eval_member_expression(e, Rc::clone(&env))? {
+                c
+            } else {
+                return Err(EvaluatorError::InvalidType(String::from(
+                    "Received a non callable value",
+                )));
+            }
+        }
         ast::MemberIdentifier::Expression(_) => todo!(),
         ast::MemberIdentifier::Super(_) => todo!(),
     };
@@ -413,8 +437,10 @@ fn eval_return_statement(r: ReturnStatement, env: Env) -> EvaluatorResult {
     }
 }
 
-fn eval_object_expression(e: ObjectExpression, env: Env) -> EvaluatorResult {
-    let ObjectExpression { properties } = e;
+fn eval_object_expression(
+    ObjectExpression { properties }: ObjectExpression,
+    env: Env,
+) -> EvaluatorResult {
     let mut object_frame = HashMap::new();
 
     properties.into_iter().try_for_each(|p| {
@@ -430,6 +456,36 @@ fn eval_object_expression(e: ObjectExpression, env: Env) -> EvaluatorResult {
         object_frame.insert(key_string, evaluated_value);
         Ok(())
     })?;
-	
-    Ok(EvaluatorValue::Object(object_frame))
+
+    Ok(EvaluatorValue::Object(Rc::new(RefCell::new(object_frame))))
+}
+
+fn eval_member_expression(
+    MemberExpression {
+        object, property, ..
+    }: MemberExpression,
+    env: Env,
+) -> EvaluatorResult {
+    if let EvaluatorValue::Object(obj) = evaluate(*object, Rc::clone(&env))? {
+        if let NodeKind::Identifier(id) = property.kind {
+            let name = id.name;
+            let member = match obj.borrow().get(name.as_str()) {
+                Some(value) => match value {
+                    EvaluatorValue::Literal(_) | EvaluatorValue::Closure(_) => value.clone(),
+                    EvaluatorValue::Object(obj) => EvaluatorValue::Object(Rc::clone(&obj)),
+                },
+                None => {
+                    println!("here");
+                    EvaluatorValue::from(JS_UNDEFINED)
+                }
+            };
+            Ok(member)
+        } else {
+            unreachable!()
+        }
+    } else {
+        return Err(EvaluatorError::InvalidType(String::from(
+            "Invalid object lookup",
+        )));
+    }
 }

@@ -1,10 +1,10 @@
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use lib_ir::ast::{literal::Literal, literal_value::LiteralValue};
 
 use crate::closure::Closure;
 
-type JsObject = HashMap<String, EvaluatorValue>;
+type JsObject = Rc<RefCell<HashMap<String, EvaluatorValue>>>;
 
 // An internal representation of js values, including primitives, functions, objects
 #[derive(Clone, Debug)]
@@ -60,7 +60,7 @@ impl ToString for EvaluatorValue {
             EvaluatorValue::Closure(c) => c.to_string(),
             EvaluatorValue::Object(obj) => {
                 let mut s = String::from("{");
-                obj.iter().for_each(|(k, v)| {
+                obj.borrow().iter().for_each(|(k, v)| {
                     s.push_str(k.as_str());
                     s.push_str(":");
                     s.push_str(v.to_string().as_str());

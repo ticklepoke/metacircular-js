@@ -475,9 +475,9 @@ pub enum LogicalOperator {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct MemberExpression {
-    object: Expression,
-    property: Expression,
-    computed: bool,
+    pub object: Expression,
+    pub property: Expression,
+    pub computed: bool,
 }
 
 #[derive(Deserialize, Clone, Debug)]

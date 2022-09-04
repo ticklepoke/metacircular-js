@@ -123,4 +123,18 @@ mod tests {
             assert_eq!(eval_result.value, JS_UNDEFINED);
         }
     }
+
+    #[test]
+    pub fn object_lookup() {
+        let ast = r#"
+		{"type":"BlockStatement","start":0,"end":26,"body":[{"type":"VariableDeclaration","start":0,"end":21,"declarations":[{"type":"VariableDeclarator","start":4,"end":21,"id":{"type":"Identifier","start":4,"end":5,"name":"a"},"init":{"type":"ObjectExpression","start":8,"end":21,"properties":[{"type":"Property","start":14,"end":18,"method":false,"shorthand":false,"computed":false,"key":{"type":"Identifier","start":14,"end":15,"name":"b"},"value":{"type":"Literal","start":17,"end":18,"value":1,"raw":"1"},"kind":"init"}]}}],"kind":"let"},{"type":"ExpressionStatement","start":22,"end":26,"expression":{"type":"MemberExpression","start":22,"end":25,"object":{"type":"Identifier","start":22,"end":23,"name":"a"},"property":{"type":"Identifier","start":24,"end":25,"name":"b"},"computed":false,"optional":false}}],"sourceType":"script"}
+		"#;
+        let ast = lib_ir::serialize(ast.to_string()).expect("Unable to deserialize ast");
+
+        let eval_result = evaluator::begin_eval(ast).expect("Unable to eval");
+
+        if let EvaluatorValue::Literal(eval_result) = eval_result {
+            assert_eq!(eval_result.value, LiteralValue::from(1.0));
+        }
+    }
 }
