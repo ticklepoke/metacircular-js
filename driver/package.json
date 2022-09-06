@@ -8,7 +8,8 @@
     "clean": "rm -rf ./dist",
     "tsc": "tsc && mkdir ./dist/wasm && cp ./wasm/* ./dist/wasm",
     "start": "node --experimental-specifier-resolution=node --loader ts-node/esm dist/index.js",
-    "start:ts": "ts-node ./index.ts"
+    "start:ts": "ts-node ./index.ts",
+    "start:ts:dev": "DEBUG=true ts-node ./index.ts"
   },
   "files": [
     "src",
