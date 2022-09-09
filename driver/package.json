@@ -11,6 +11,9 @@
     "start:ts": "ts-node ./index.ts",
     "start:ts:dev": "DEBUG=true ts-node ./index.ts"
   },
+  "bin": {
+    "meta-js": "./dist/index.js"
+  },
   "files": [
     "src",
     "wasm"
