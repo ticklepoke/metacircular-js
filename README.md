@@ -4,7 +4,7 @@
 
 # Metacircular-JS
 
-A metacircular evaluator for Javascript, based on the SICP textbook.
+A metacircular evaluator for Javascript, based on the [SICP](https://mitpress.mit.edu/9780262543231/structure-and-interpretation-of-computer-programs/) textbook.
 
 The metacircular evaluator is a story of two recursively mutual functions: `evaluate()` and `apply()`. `evalute()` recursively walks and interprets an AST, while `apply()` invokes function calls.
 
@@ -24,23 +24,6 @@ The evaluator adopts a "while there is work to do, do it" philosophy. This resul
     1 / (1 + (2 * 3))
 =>  1 / (1 + 6)
 =>  1 / 7
-```
-
-## Invoking the host language
-
-The host language is used to support features of the interpreted language. This is easier to implement when the host language is similar to the interpreted language. For example, when evaluating and applying an addition `BinaryExpression` in the interpreted language, we can apply it using the underlying host runtime:
-
-```js
-const operator = '+';
-
-const primitiveBinaryFunctions = {
-	'+': (a, b) => a + b,
-	// ... other binary functions
-};
-
-const callFn = primitiveBinaryFunctions[operator];
-
-apply(callFn, a, b);
 ```
 
 ## Environment Frames
