@@ -12,6 +12,23 @@ The metacircular evaluator is a story of two recursively mutual functions: `eval
 
 **Rust Evaluator**: The entry point for the new Rust based evaluator can be found at `./driver`.
 
+## Usage
+
+The rust evaluator is compiled to wasm so that it can be run in Javascript environments. It has to be rebuilt everytime as there currently isn't a bundler that does it for us.
+```sh
+yarn build:wasm && yarn clean && yarn tsc
+```
+
+To run:
+```sh
+# Running in debug env
+yarn start:ts:dev [your file name]
+# Running ts files directly
+yarn start:ts [your file name]
+# Running dist js files
+yarn start [your file name]
+```
+
 <p align="center">
   <img src="/assets/overview.png" alt="overview">
 </p>
@@ -97,6 +114,7 @@ Expression  ::=     number                                  number literal
             |       (parameters) => Expression | Block      arrow function
             |       name.name                               object access
             |       identifier (parameters)					function call
+            |       Expression ? Expression : Expression    ternary conditional
 
 ObjectKey   ::=     string | [ Expression ]
 
