@@ -482,9 +482,9 @@ pub struct MemberExpression {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct ConditionalExpression {
-    test: Expression,
-    alternate: Expression,
-    consequent: Expression,
+    pub test: Expression,
+    pub alternate: Expression,
+    pub consequent: Expression,
 }
 
 #[derive(Deserialize, Clone, Debug)]

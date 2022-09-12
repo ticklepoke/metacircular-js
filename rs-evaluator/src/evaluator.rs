@@ -9,9 +9,9 @@ use lib_ir::ast::literal_value::LiteralValue;
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
 use lib_ir::ast::{
     self, AssignmentExpression, AssignmentOperator, BinaryExpression, CallExpression,
-    FunctionDeclaration, FunctionExpression, Identifier, IfStatement, LogicalExpression,
-    MemberExpression, Node, ObjectExpression, Property, ReturnStatement, UnaryExpression,
-    VariableDeclaration, VariableDeclarator,
+    ConditionalExpression, FunctionDeclaration, FunctionExpression, Identifier, IfStatement,
+    LogicalExpression, MemberExpression, Node, ObjectExpression, Property, ReturnStatement,
+    UnaryExpression, VariableDeclaration, VariableDeclarator,
 };
 use lib_ir::ast::{BlockStatement, NodeKind};
 
@@ -65,6 +65,7 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::ObjectExpression(e) => eval_object_expression(e, env),
         NodeKind::MemberExpression(e) => eval_member_expression(e, env),
         NodeKind::IfStatement(e) => eval_if_statement(e, env),
+        NodeKind::ConditionalExpression(e) => eval_conditional_expression(e, env),
         _ => unimplemented!("{:?}", tree.kind),
     }
 }
@@ -508,4 +509,23 @@ fn eval_if_statement(
     }
 
     Ok(EvaluatorValue::from(JS_UNDEFINED))
+}
+
+fn eval_conditional_expression(
+    ConditionalExpression {
+        test,
+        alternate,
+        consequent,
+    }: ConditionalExpression,
+    env: Env,
+) -> EvaluatorResult {
+    let test_value: bool = evaluate(*test, Rc::clone(&env))?.into();
+
+    let body_val = if test_value {
+        evaluate(*consequent, Rc::clone(&env))?
+    } else {
+        evaluate(*alternate, Rc::clone(&env))?
+    };
+
+    Ok(body_val)
 }

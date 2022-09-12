@@ -1,10 +1,7 @@
-let x = 4;
-let y = 3;
+let x;
 
-if (x == 1) {
+if ({ x: 1 }) {
 	x = 2;
-} else {
-	y = 4
 }
 
-y;
+x;
