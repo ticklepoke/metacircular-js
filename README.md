@@ -8,7 +8,9 @@ A metacircular evaluator for Javascript, based on the SICP textbook.
 
 The metacircular evaluator is a story of two recursively mutual functions: `evaluate()` and `apply()`. `evalute()` recursively walks and interprets an AST, while `apply()` invokes function calls.
 
-**Note**: A rust based interpreter is currently being built. The Javascript evaluator can still be found in `./js-evaluator`.
+**Typescript Evaluator**: The old Ts evaluator can be found at `./js-evaluator`.
+
+**Rust Evaluator**: The entry point for the new Rust based evaluator can be found at `./driver`.
 
 <p align="center">
   <img src="/assets/overview.png" alt="overview">
@@ -97,6 +99,8 @@ Statement   ::=     const name = Expression;                constant declaration
             |       let name = Expression;                  variable declaration
             |       Block                                   block statement
             |       Expression;                             expression statement
+            |       function name (parameters) Block        function declaration
+            |       return Expression                       return expression
 
 Assignment  ::=     name = Expression                       variable assignment
 
@@ -107,6 +111,9 @@ Expression  ::=     number                                  number literal
             |       UnaryOperator Expression                unary operator combination
             |       { ObjectKey: Expression }               object literal
             |       name.name = Expression                  object property assignment
+            |       (parameters) => Expression | Block      arrow function
+            |       name.name                               object access
+            |       identifier (parameters)					function call
 
 ObjectKey   ::=     string | [ Expression ]
 
@@ -121,9 +128,7 @@ BinaryOperator ::= + | - | * | / | % | << | >> | >>> | < | > | <= | >=
 There are plans for the following rules to be supported.
 
 ```
-Statement   ::=     function name (parameters) Block        function declaration
-            |       return Expression                       return expression
-            |       IfStatement                             conditional statement
+Statement   ::=     IfStatement                             conditional statement
             |       IfElseStatement                         conditional alternative statement
 
 IfStatement ::=     if (Expression) Block
@@ -131,11 +136,9 @@ IfStatement ::=     if (Expression) Block
 IfElseStatement ::= IfStatement else
                     (Block | IfStatement | IfElseStatement)
 
-Expression  ::=     (parameters) => Expression | Block      arrow function
-            |       Expression ? Expression : Expression    ternary conditional
+Expression  ::=     Expression ? Expression : Expression    ternary conditional
             |       [ Expressions ]                         array literal
             |       Expression [ Expression ]               array access / object access
             |       Expression [ Expression ] = Expression  array assignment
-            |       name.name                               object access
 
 ```
