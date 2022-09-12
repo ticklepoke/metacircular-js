@@ -204,9 +204,9 @@ pub struct ContinueStatement {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct IfStatement {
-    test: Expression,
-    consequent: Statement,
-    alternate: Option<Statement>,
+    pub test: Expression,
+    pub consequent: Statement,
+    pub alternate: Option<Statement>,
 }
 
 #[derive(Deserialize, Clone, Debug)]

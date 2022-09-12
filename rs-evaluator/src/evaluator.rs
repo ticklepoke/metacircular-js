@@ -9,9 +9,9 @@ use lib_ir::ast::literal_value::LiteralValue;
 use lib_ir::ast::math::{Additive, BitwiseBinary, BitwiseShift, Multiplicative};
 use lib_ir::ast::{
     self, AssignmentExpression, AssignmentOperator, BinaryExpression, CallExpression,
-    FunctionDeclaration, FunctionExpression, Identifier, LogicalExpression, MemberExpression, Node,
-    ObjectExpression, Property, ReturnStatement, UnaryExpression, VariableDeclaration,
-    VariableDeclarator,
+    FunctionDeclaration, FunctionExpression, Identifier, IfStatement, LogicalExpression,
+    MemberExpression, Node, ObjectExpression, Property, ReturnStatement, UnaryExpression,
+    VariableDeclaration, VariableDeclarator,
 };
 use lib_ir::ast::{BlockStatement, NodeKind};
 
@@ -64,6 +64,7 @@ pub fn evaluate(tree: ast::Node, env: Env) -> EvaluatorResult {
         NodeKind::ReturnStatement(r) => eval_return_statement(r, env),
         NodeKind::ObjectExpression(e) => eval_object_expression(e, env),
         NodeKind::MemberExpression(e) => eval_member_expression(e, env),
+        NodeKind::IfStatement(e) => eval_if_statement(e, env),
         _ => unimplemented!("{:?}", tree.kind),
     }
 }
@@ -488,4 +489,23 @@ fn eval_member_expression(
             "Invalid object lookup",
         )));
     }
+}
+
+fn eval_if_statement(
+    IfStatement {
+        test,
+        consequent,
+        alternate,
+    }: IfStatement,
+    env: Env,
+) -> EvaluatorResult {
+    let test_value: bool = evaluate(*test, Rc::clone(&env))?.into();
+
+    if test_value {
+        evaluate(*consequent, Rc::clone(&env))?;
+    } else if let Some(alternate) = alternate {
+        evaluate(*alternate, Rc::clone(&env))?;
+    }
+
+    Ok(EvaluatorValue::from(JS_UNDEFINED))
 }

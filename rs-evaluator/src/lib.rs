@@ -137,4 +137,18 @@ mod tests {
             assert_eq!(eval_result.value, LiteralValue::from(1.0));
         }
     }
+
+    #[test]
+    pub fn conditional() {
+        let ast = r#"
+		{"type":"BlockStatement","start":0,"end":39,"body":[{"type":"VariableDeclaration","start":0,"end":10,"declarations":[{"type":"VariableDeclarator","start":4,"end":9,"id":{"type":"Identifier","start":4,"end":5,"name":"x"},"init":{"type":"Literal","start":8,"end":9,"value":1,"raw":"1"}}],"kind":"let"},{"type":"IfStatement","start":12,"end":35,"test":{"type":"BinaryExpression","start":16,"end":22,"left":{"type":"Identifier","start":16,"end":17,"name":"x"},"operator":"==","right":{"type":"Literal","start":21,"end":22,"value":1,"raw":"1"}},"consequent":{"type":"BlockStatement","start":24,"end":35,"body":[{"type":"ExpressionStatement","start":27,"end":33,"expression":{"type":"AssignmentExpression","start":27,"end":32,"operator":"=","left":{"type":"Identifier","start":27,"end":28,"name":"x"},"right":{"type":"Literal","start":31,"end":32,"value":2,"raw":"2"}}}]},"alternate":null},{"type":"ExpressionStatement","start":37,"end":39,"expression":{"type":"Identifier","start":37,"end":38,"name":"x"}}],"sourceType":"script"}
+		"#;
+        let ast = lib_ir::serialize(ast.to_string()).expect("Unable to deserialize ast");
+
+        let eval_result = evaluator::begin_eval(ast).expect("Unable to eval");
+
+        if let EvaluatorValue::Literal(eval_result) = eval_result {
+            assert_eq!(eval_result.value, LiteralValue::from(2.0));
+        }
+    }
 }
